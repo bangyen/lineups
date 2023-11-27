@@ -1,22 +1,16 @@
+from bs4 import BeautifulSoup
 import sys
 import os
 import re
 
 def parse(html):
-    tab = (
-        '<span class="b0Xfjd" '
-        'style="color:#[0-9A-F]{6}">'
-        'Lineup</span>'
-    )
+    soup = BeautifulSoup(html, 'html.parser')
 
-    artist = (
-        '<span class='
-        '"nxucXc CxwsZe">'
-        '([^<]+)</span>'
-    )
+    if not soup.find('span', class_='b0Xfjd', string='Lineup'):
+        return
 
-    if re.search(tab, html):
-        return re.findall(artist, html)
+    span = soup.find_all('span', class_='nxucXc CxwsZe')
+    return [s.string for s in span]
 
 if __name__ == '__main__':
     args = sys.argv
