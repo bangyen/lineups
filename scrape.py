@@ -21,7 +21,7 @@ if __name__ == '__main__':
     if not os.path.exists(args[1]):
         exit('File not found.')
 
-    with open(args[1]) as file:
+    with open(args[1], encoding='utf-8') as file:
         html = file.read()
         print(parse(html))
 
