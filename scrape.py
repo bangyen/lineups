@@ -1,30 +1,12 @@
-from   spotipy.oauth2  import SpotifyClientCredentials
-from   difflib         import SequenceMatcher
-from   bs4             import BeautifulSoup
-import spotipy
+import pylast
+import bs4
+
+import time
 import sys
 import os
-import re
-
-spotify = spotipy.Spotify(
-    auth_manager=SpotifyClientCredentials()
-)
-
-
-def subset(s1, s2, acc=''):
-    if not s1:
-        return False
-
-    if s1 in s2 and acc in s2:
-        return True
-
-    return subset(
-        s1[:-1], s2, s1[-1]
-    )
-
 
 def parse(html):
-    soup = BeautifulSoup(
+    soup = bs4.BeautifulSoup(
         html, 'html.parser'
     )
 
@@ -35,54 +17,30 @@ def parse(html):
     return [str(s.string) for s in span]
 
 
-def search(name, sub=False):
-    results = spotify.search(
-        q='artist:' + name,
-        type='artist'
+def init(key, secret):
+    network = pylast.LastFMNetwork(
+        api_key=key,
+        api_secret=secret
     )
 
-    items = results['artists']['items']
+    def search(name, sub=False):
+        artist = network.get_artist(name)
+        items  = artist.get_top_tags(limit=5)
+        corr   = artist.get_correction()
+        tags   = [t.item.name for t in items]
 
-    for artist in items:
-        match = artist['name']
+        return name, corr, tags
 
-        ratio = SequenceMatcher(
-            None,
-            name.lower(),
-            match.lower()
-        ).ratio()
-
-        genre = (match, artist['genres'])
-
-        if ratio > 0.9:
-            return genre
-
-        if sub:
-            b1 = subset(name, match)
-            b2 = subset(match, name)
-
-            if b1 or b2:
-                return genre
-
-
-def find(name):
-    apost = search(name.replace("'", ''))
-    paren = search(re.sub('\([^()]+\)$', '', name))
-    acron = search (''.join(w[0] for w in name.split()))
-    match = apost or paren or acron
-
-    if match:
-        return match
-
-    if m := search(name, True):
-        return m
-
-    return name, []
+    return search
 
 
 if __name__ == '__main__':
-    args = sys.argv
-    res  = []
+    args   = sys.argv
+    search = init(
+        os.environ['PYLAST_API_KEY'],
+        os.environ['PYLAST_API_SECRET']
+    )
+
 
     if len(args) == 1:
         exit('Please supply a file.')
@@ -95,6 +53,7 @@ if __name__ == '__main__':
         names = parse(html)
 
         for n in names:
-            print(*find(n))
+            print(*search(n))
+            time.sleep(1)
 
         file.close()
