@@ -1,4 +1,5 @@
 from   spotipy.oauth2  import SpotifyClientCredentials
+from   difflib         import SequenceMatcher
 from   bs4             import BeautifulSoup
 import spotipy
 import sys
@@ -9,20 +10,21 @@ spotify = spotipy.Spotify(
 )
 
 def parse(html):
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(
+        html, 'html.parser'
+    )
 
-    if not soup.find('span', class_='b0Xfjd', string='Lineup'):
-        return
+    span = soup.find_all(
+        'span', class_='nxucXc CxwsZe'
+    )
 
-    span = soup.find_all('span', class_='nxucXc CxwsZe')
     return [str(s.string) for s in span]
 
 
 def search(name):
     results = spotify.search(
         q='artist:' + name,
-        type='artist',
-        limit=10
+        type='artist'
     )
 
     items = results['artists']['items']
@@ -30,8 +32,12 @@ def search(name):
 
     for artist in items:
         match = artist['name']
+        # maybe change algorithm?
+        ratio = SequenceMatcher(
+            None, lower, match.lower()
+        ).ratio()
 
-        if match.lower() == lower:
+        if ratio > 0.8:
             return match, artist['genres']
 
     return name, []
