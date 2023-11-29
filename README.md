@@ -1,2 +1,23 @@
-# lineups
-A database for storing and looking up different music festival lineups.
+# Lineup Database
+## Tutorial
+- Client ID/Secret
+  - Go to `https://developer.spotify.com/dashboard`
+  - Click on `Create App`
+  - Use `https://localhost:[port]/callback` as the Redirect URI
+    - e.g., `https://localhost:8000/callback`
+  - Select `Web API`
+  - Save App
+  - Click on App and go to Settings
+  - Copy Client ID and Client Secret
+  - Paste in `variables.sh`
+  - Run `source variables.sh`
+- `.html` File
+  - Search `[festival] [year] lineup` on Google
+    - e.g., `bonnaroo 2023 lineup`
+    - Right Click on Page and Click `Save Page As...`
+    - Move `.html` file to Repository
+- Python
+  - Install Python at `https://www.python.org/`
+  - Run `pip install -r requirements.txt`
+  - Run `python scrape.py [lineup html file]`
+    - e.g., `python scrape.py lineup.html`
