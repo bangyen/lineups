@@ -1,14 +1,12 @@
 # Lineup Database
 ## Tutorial
 - Client ID/Secret
-  - Go to `https://developer.spotify.com/dashboard`
-  - Click on `Create App`
-  - Use `https://localhost:[port]/callback` as the Redirect URI
+  - Go to `https://www.last.fm/api/account/create`
+  - Use `https://localhost:[port]/callback` as the Callback URL (?)
     - e.g., `https://localhost:8000/callback`
-  - Select `Web API`
-  - Save App
-  - Click on App and go to Settings
-  - Copy Client ID and Client Secret
+  - Submit
+  - Go to `https://www.last.fm/api/accounts`
+  - Copy API Key and Shared Secret
   - Paste in `variables.sh`
   - Run `source variables.sh`
 - `.html` File
