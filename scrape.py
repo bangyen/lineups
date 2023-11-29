@@ -1,6 +1,5 @@
 from   spotipy.oauth2  import SpotifyClientCredentials
 from   bs4             import BeautifulSoup
-from   multiprocessing import Pool
 import spotipy
 import sys
 import os
@@ -16,27 +15,30 @@ def parse(html):
         return
 
     span = soup.find_all('span', class_='nxucXc CxwsZe')
-    return [s.string for s in span]
+    return [str(s.string) for s in span]
 
 
 def search(name):
     results = spotify.search(
         q='artist:' + name,
-        type='artist'
+        type='artist',
+        limit=10
     )
 
     items = results['artists']['items']
+    lower = name.lower()
 
-    if len(items) == 0:
-        return
+    for artist in items:
+        match = artist['name']
 
-    artist = items[0]
-    return artist['name'], artist['genres']
+        if match.lower() == lower:
+            return match, artist['genres']
+
+    return name, []
 
 
 if __name__ == '__main__':
     args = sys.argv
-    pool = Pool()
     res  = []
 
     if len(args) == 1:
@@ -46,15 +48,10 @@ if __name__ == '__main__':
         exit('File not found.')
 
     with open(args[1], encoding='utf-8') as file:
-        html = file.read()
-        res  = pool.map(search, html)
+        html  = file.read()
+        names = parse(html)
 
-        for n in html:
-            proc = pool.apply_async(search, [n])
-            res.append(proc)
-
-        for p in res:
-            t = p.get(timeout=10)
-            print(t)
+        for n in names:
+            print(search(n))
 
         file.close()
