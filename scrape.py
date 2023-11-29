@@ -1,5 +1,6 @@
 import pylast
 import bs4
+import re
 
 import time
 import sys
@@ -23,13 +24,28 @@ def init(key, secret):
         api_secret=secret
     )
 
-    def search(name, sub=False):
+    def lookup(name):
         artist = network.get_artist(name)
-        items  = artist.get_top_tags(limit=5)
+        items  = artist.get_top_tags(limit=10)
         corr   = artist.get_correction()
-        tags   = [t.item.name for t in items]
 
-        return name, corr, tags
+        tags   = [t.item.name for t in items]
+        top    = [
+            t for t in tags
+            if t != 'seen live'
+        ]
+
+        return corr, top[:5]
+
+    def search(name):
+        exp = '([^()]+) ?\(([^()]+)\)$'
+        mat = re.search(exp, name)
+        res = lookup(name)
+
+        if not res[1] and mat:
+            return lookup(mat.group(1))
+
+        return res
 
     return search
 
