@@ -1,4 +1,4 @@
 #!/bin/bash
 
-export SPOTIPY_CLIENT_ID=''
-export SPOTIPY_CLIENT_SECRET=''
+export PYLAST_API_KEY=''
+export PYLAST_API_SECRET=''
