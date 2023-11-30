@@ -1,3 +1,6 @@
+import spotipy.oauth2 as oauth2
+import spotipy
+import difflib
 import pylast
 import bs4
 import re
@@ -5,6 +8,14 @@ import re
 import time
 import sys
 import os
+
+def strdiff(name, match):
+    return difflib.SequenceMatcher(
+        None,
+        name.lower(),
+        match.lower()
+    ).ratio()
+
 
 def parse(html):
     soup = bs4.BeautifulSoup(
@@ -24,6 +35,11 @@ def init(key, secret):
         api_secret=secret
     )
 
+    spotify = spotipy.Spotify(
+        auth_manager=oauth2. \
+            SpotifyClientCredentials()
+    )
+
     def lookup(name):
         artist = network.get_artist(name)
         items  = artist.get_top_tags(limit=10)
@@ -37,15 +53,34 @@ def init(key, secret):
 
         return corr, top[:5]
 
+    def backup(name):
+        paren = re.sub(r'\([^()]+\)$', '', name)
+
+        results = spotify.search(
+            q=f'artist:{paren}',
+            type='artist'
+        )
+
+        items = results['artists']['items']
+
+        for artist in items:
+            match = artist['name']
+
+            if all(s in match for s in name.split()) or \
+               all(s in name for s in match.split()) or \
+                    strdiff(name , match) > 0.9      or \
+                    strdiff(paren, match) > 0.9:
+                return match, artist['genres']
+
+        return name, []
+
     def search(name):
-        exp = '([^()]+) ?\(([^()]+)\)$'
-        mat = re.search(exp, name)
         res = lookup(name)
 
-        if not res[1] and mat:
-            return lookup(mat.group(1))
+        if (res := lookup(name))[1]:
+            return res
 
-        return res
+        return backup(name)
 
     return search
 
