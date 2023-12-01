@@ -70,10 +70,10 @@ def init(key, secret):
     def lookup(name):
         artist = network.get_artist(name)
         items  = artist.get_top_tags(limit=15)
+        summ   = artist.get_bio('summary')
         corr   = artist.get_correction()
         tags   = [t.item for t in items]
 
-        # f'queer: {any("queer"  in t.name for t in tags)}'
         woman  = any(
             'female' in t.name
             for t in tags
@@ -85,10 +85,15 @@ def init(key, secret):
             and 'female' not in t.name
         ][:5]
 
-        return corr,                  \
-            [t.name for t in genres], \
-            best(genres),             \
-            f'woman: {woman}'
+        if re.match(r'[^\n]+\n\n1', summ):
+            alt = genres[:1]
+        else:
+            alt = genres
+
+        return corr          , \
+            best(alt)        , \
+            f'woman: {woman}', \
+            [t.name for t in genres]
 
     def backup(name):
         regex = re.compile(r'("[^"]+"|\([^()]+\))')
