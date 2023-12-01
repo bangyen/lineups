@@ -26,7 +26,7 @@ def parse(html):
         'span', class_='nxucXc CxwsZe'
     )
 
-    return [str(s.string) for s in span]
+    return [s.string for s in span]
 
 
 def init(key, secret):
@@ -40,18 +40,47 @@ def init(key, secret):
             SpotifyClientCredentials()
     )
 
+    cache = {}
+    DELAY = 1
+
+    def total(tag):
+        if (name := tag.name) not in cache:
+            req = tag._request('tag.getInfo', True)
+            ext = pylast._extract(req, 'total')
+
+            cache[name] = pylast._number(ext)
+            time.sleep(DELAY)
+
+        return cache[name]
+
+    def best(tags):
+        res = (None, 0)
+
+        for t in tags:
+            tot = total(t)
+
+            if tot > res[1]:
+                res = (t, tot)
+
+            if tot > 750_000:
+                break
+
+        return res[0]
+
     def lookup(name):
         artist = network.get_artist(name)
         items  = artist.get_top_tags(limit=10)
         corr   = artist.get_correction()
 
-        tags   = [t.item.name for t in items]
-        top    = [
-            t for t in tags
-            if t != 'seen live'
-        ]
+        tags   = [
+            t.item for t in items
+            if  t.item.name != 'seen live'
+            and t.item.name != 'female vocalists'
+        ][:5]
 
-        return corr, top[:5]
+        return corr,                \
+            [t.name for t in tags], \
+            best(tags)
 
     def backup(name):
         paren = re.sub(r'\([^()]+\)$', '', name)
@@ -70,12 +99,13 @@ def init(key, secret):
                all(s in name for s in match.split()) or \
                     strdiff(name , match) > 0.9      or \
                     strdiff(paren, match) > 0.9:
-                return match, artist['genres']
+                return match, artist['genres'][:5]
 
         return name, []
 
     def search(name):
         res = lookup(name)
+        time.sleep(DELAY)
 
         if (res := lookup(name))[1]:
             return res
