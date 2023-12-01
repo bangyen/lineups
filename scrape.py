@@ -1,5 +1,3 @@
-import spotipy.oauth2 as oauth2
-import spotipy
 import difflib
 import pylast
 import bs4
@@ -8,6 +6,8 @@ import re
 import time
 import sys
 import os
+
+DELAY = 1
 
 def strdiff(name, match):
     return difflib.SequenceMatcher(
@@ -29,19 +29,8 @@ def parse(html):
     return [s.string for s in span]
 
 
-def init(key, secret):
-    network = pylast.LastFMNetwork(
-        api_key=key,
-        api_secret=secret
-    )
-
-    spotify = spotipy.Spotify(
-        auth_manager=oauth2. \
-            SpotifyClientCredentials()
-    )
-
+def memoize():
     cache = {}
-    DELAY = 1
 
     def total(tag):
         if (name := tag.name) not in cache:
@@ -67,6 +56,17 @@ def init(key, secret):
 
         return res[0]
 
+    return best
+
+
+def init(key, secret):
+    network = pylast.LastFMNetwork(
+        api_key=key,
+        api_secret=secret
+    )
+
+    best = memoize()
+
     def lookup(name):
         artist = network.get_artist(name)
         items  = artist.get_top_tags(limit=10)
@@ -75,7 +75,7 @@ def init(key, secret):
         tags   = [
             t.item for t in items
             if  t.item.name != 'seen live'
-            and t.item.name != 'female vocalists'
+            and 'female' not in t.item.name
         ][:5]
 
         return corr,                \
@@ -83,25 +83,22 @@ def init(key, secret):
             best(tags)
 
     def backup(name):
-        paren = re.sub(r'\([^()]+\)$', '', name)
+        regex = re.compile(r'("[^"]+"|\([^()]+\))')
+        paren = regex.sub('', name)
 
-        results = spotify.search(
-            q=f'artist:{paren}',
-            type='artist'
-        )
+        results =                            \
+            network.search_for_artist(paren) \
+                   .get_next_page()
 
-        items = results['artists']['items']
+        items = [a.name for a in results]
 
-        for artist in items:
-            match = artist['name']
+        for match in items:
+            artist = regex.sub('', match)
 
-            if all(s in match for s in name.split()) or \
-               all(s in name for s in match.split()) or \
-                    strdiff(name , match) > 0.9      or \
-                    strdiff(paren, match) > 0.9:
-                return match, artist['genres'][:5]
+            if strdiff(paren, artist) > 0.9:
+                return lookup(match)
 
-        return name, []
+        return name, [], None
 
     def search(name):
         res = lookup(name)
