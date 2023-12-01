@@ -69,18 +69,26 @@ def init(key, secret):
 
     def lookup(name):
         artist = network.get_artist(name)
-        items  = artist.get_top_tags(limit=10)
+        items  = artist.get_top_tags(limit=15)
         corr   = artist.get_correction()
+        tags   = [t.item for t in items]
 
-        tags   = [
-            t.item for t in items
-            if  t.item.name != 'seen live'
-            and 'female' not in t.item.name
+        # f'queer: {any("queer"  in t.name for t in tags)}'
+        woman  = any(
+            'female' in t.name
+            for t in tags
+        )
+
+        genres = [
+            t for t in tags
+            if  t.name != 'seen live'
+            and 'female' not in t.name
         ][:5]
 
-        return corr,                \
-            [t.name for t in tags], \
-            best(tags)
+        return corr,                  \
+            [t.name for t in genres], \
+            best(genres),             \
+            f'woman: {woman}'
 
     def backup(name):
         regex = re.compile(r'("[^"]+"|\([^()]+\))')
@@ -131,7 +139,7 @@ if __name__ == '__main__':
         names = parse(html)
 
         for n in names:
-            print(*search(n))
+            print(*search(n), sep='\n\t')
             time.sleep(1)
 
         file.close()
