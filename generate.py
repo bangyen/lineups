@@ -8,17 +8,23 @@ if __name__ == '__main__':
         'uploads/2021/03/Bonnaroo-Lineup-2023.png'
     )
 
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
     data = {
-        'apikey': os.environ['OCR_API_KEY'],
+        'apiKey': os.environ['OPTIIC_API_KEY'],
         'url'   : image
     }
 
+    # https://curlconverter.com/
     resp = requests.get(
-        'https://api.ocr.space/parse/imageurl',
-        params=data
+        'https://api.optiic.dev/process',
+        headers=headers,
+        json=data
     )
 
     with open('output.txt', 'w') as file:
-        output = resp.json()['ParsedResults'][0]['ParsedText']
+        output = resp.json()['text']
         file.write(output)
         file.close()
