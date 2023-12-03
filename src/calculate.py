@@ -1,10 +1,10 @@
 import generate
 
-def percent(fest, artists, sets, limit=5):
+def percent(pred, artists, sets, limit=7):
     genres = {}
 
     for s in sets:
-        if s[0] != fest:
+        if not pred(s):
             continue
 
         main = artists[s[1]]['main']
@@ -34,14 +34,18 @@ def percent(fest, artists, sets, limit=5):
 
 
 if __name__ == '__main__':
-    name   = 'json.zlib'
+    year    = 2023
+    name    = 'json.zlib'
     f, a, s = generate.loads(name)
 
     for fest in f:
-        genres = percent(fest, a, s)[:-1]
-        long   = max(len(t[0]) for t in genres)
+        def pred(s):
+            return  s[0] == fest \
+                and s[2] == year
 
-        print(fest)
+        genres = percent(pred, a, s)[:-1]
+        long   = max(len(t[0]) for t in genres)
+        print(fest, year)
 
         for k,v in genres:
             size = ' ' * (long - len(k))
