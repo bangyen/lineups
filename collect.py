@@ -3,7 +3,7 @@ import pylast
 import bs4
 import re
 
-import save
+import generate
 import time
 import sys
 import os
@@ -18,28 +18,12 @@ def strdiff(name, match):
     ).ratio()
 
 
-def parse(html):
-    css = {
-        'old': 'yKMVIe',
-        'new': 'PZPZlf ssJ7i xgAzOe',
-        'loc': 'LrzXr kno-fv wHYlTd z8gr9e',
-        'set': 'nxucXc CxwsZe'
-    }
-
-    soup  = bs4.BeautifulSoup(html, 'html.parser')
-    names = soup.find_all('span', class_=css['set'])
-    info  = soup.find_all('span', class_=css['loc'])
-    old   = soup.find('span', class_=css['old'])
-    new   = soup.find('div',  class_=css['new'])
-
-    dates = info[1] if info[0].a else info[0]
-    place = info[0] if info[0].a else info[1]
-    fest  = old or new
-
-    return fest.string.split()[1::-1], \
-           dates.string.split(' – ') , \
-           place.a.string            , \
-           [s.string for s in names]
+def handler(func, val, **kwargs):
+    try:
+        time.sleep(DELAY)
+        return func(**kwargs)
+    except pylast.PyLastError:
+        return val
 
 
 def memoize():
@@ -70,14 +54,6 @@ def memoize():
         return res[0]
 
     return best
-
-
-def handler(func, val, **kwargs):
-    try:
-        time.sleep(DELAY)
-        return func(**kwargs)
-    except pylast.PyLastError:
-        return val
 
 
 def init(key, secret):
@@ -152,11 +128,39 @@ def init(key, secret):
     return search
 
 
+def append(html, fests, artists, sets):
+    [f, y], d, p, n = generate.parse(html)
+
+    if f not in fests:
+        fests[f] = {
+            'place': p,
+            'dates': {}
+        }
+
+    dates = fests[f]['dates']
+    year  = int(y)
+
+    if year not in dates:
+        dates[year] = d
+
+    for a in n:
+        c, g = search(a, artists)
+        tup  = (f, c, year)
+
+        if tup not in sets:
+            sets.append(tup)
+
+        if c not in artists:
+            artists[c] = g
+
+            if not g['genres']:
+                print(f'Not Found: {c}')
+
+
 if __name__ == '__main__':
     args   = sys.argv
     name   = 'info.json'
-    fests, artists, sets \
-           = save.loads(name)
+    tables = generate.loads(name)
 
     search = init(
         os.environ['PYLAST_API_KEY'],
@@ -171,31 +175,7 @@ if __name__ == '__main__':
 
     with open(args[1], encoding='utf-8') as file:
         html = file.read()
-        [f, y], d, p, n = parse(html)
-
-        if f not in fests:
-            fests[f] = {
-                'place': p,
-                'dates': {}
-            }
-
-        dates = fests[f]['dates']
-        year  = int(y)
-
-        if year not in dates:
-            dates[year] = d
-
-        for a in n:
-            c, g = search(a, artists)
-            tup  = (f, c, year)
-            sets.append(tup)
-
-            if c not in artists:
-                artists[c] = g
-
-                if not g['genres']:
-                    print(f'Not Found: {c}')
-
+        append(html, *tables)
         file.close()
 
-    save.dumps(tables, name)
+    generate.dumps(tables, name)
