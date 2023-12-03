@@ -1,4 +1,4 @@
-import generate
+import src.generate as generate
 
 def percent(pred, artists, sets, limit=7):
     genres = {}

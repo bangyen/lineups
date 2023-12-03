@@ -1,11 +1,11 @@
-import difflib
-import pylast
-import re
-
-import generate
+import src.generate as generate
 import time
 import sys
 import os
+
+import difflib
+import pylast
+import re
 
 DELAY = 1
 
