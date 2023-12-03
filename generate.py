@@ -1,24 +1,26 @@
+import zlib
 import json
+import bs4
 
 def loads(name):
     data = ''
 
-    with open(name) as file:
-        data = file.read()
+    with open(name, 'rb') as file:
+        comp = file.read()
+        data = zlib.decompress(comp)
+
         file.close()
 
     return json.loads(data)
 
 
 def dumps(tables, name):
-    with open(name, 'w') as file:
-        data = json.dumps(
-            tables,
-            sort_keys=True,
-            indent=4
-        )
+    with open(name, 'wb') as file:
+        data = json.dumps(tables)
+        byte = data.encode()
+        comp = zlib.compress(byte)
 
-        file.write(data)
+        file.write(comp)
         file.close()
 
 

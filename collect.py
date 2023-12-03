@@ -1,6 +1,5 @@
 import difflib
 import pylast
-import bs4
 import re
 
 import generate
@@ -65,6 +64,9 @@ def init(key, secret):
     best = memoize()
 
     def lookup(name, cache):
+        if name in cache:
+            return name, cache[name]
+
         res  = network.get_artist(name)
         corr = handler(res.get_correction, name)
 
@@ -159,7 +161,7 @@ def append(html, fests, artists, sets):
 
 if __name__ == '__main__':
     args   = sys.argv
-    name   = 'info.json'
+    name   = 'json.zlib'
     tables = generate.loads(name)
 
     search = init(
