@@ -72,6 +72,14 @@ def memoize():
     return best
 
 
+def handler(func, val, **kwargs):
+    try:
+        time.sleep(DELAY)
+        return func(**kwargs)
+    except pylast.PyLastError:
+        return val
+
+
 def init(key, secret):
     network = pylast.LastFMNetwork(
         api_key=key,
@@ -81,17 +89,15 @@ def init(key, secret):
     best = memoize()
 
     def lookup(name, cache):
-        artist = network.get_artist(name)
-        corr   = artist.get_correction()
-        time.sleep(DELAY)
+        res  = network.get_artist(name)
+        corr = handler(res.get_correction, name)
 
         if corr in cache:
             return corr, cache[corr]
 
-        summ   = artist.get_bio_summary()
-        items  = artist.get_top_tags(limit=15)
+        summ   = handler(res.get_bio_summary, '')
+        items  = handler(res.get_top_tags, [], limit=15)
         tags   = [t.item for t in items]
-        time.sleep(DELAY)
 
         woman  = any(
             'female' in t.name
@@ -129,7 +135,11 @@ def init(key, secret):
             if strdiff(paren, artist) > 0.9:
                 return lookup(match, cache)
 
-        return name, [], None
+        return name, {
+            'main'  : None,
+            'genres': [],
+            'woman' : None
+        }
 
     def search(name, cache):
         res = lookup(name, cache)
