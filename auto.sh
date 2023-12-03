@@ -1,9 +1,6 @@
 #!/bin/bash
 
-list=(data/*)
-file=${list[0]}
-
-if [[ $file == *\.html ]]; then
+for file in data/*.html; do
     echo "=== Current file: $file ==="
     python3 -m src.collect "$file"
 
@@ -13,8 +10,8 @@ if [[ $file == *\.html ]]; then
 
         cp json.zlib backup/backup_$num.zlib
         mv "$file" "data/done"
+        exit 0
+    else
+        exit 1
     fi
-else
-    echo "=== Invalid file: $file ==="
-fi
-
+done
