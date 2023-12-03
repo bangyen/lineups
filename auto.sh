@@ -5,7 +5,7 @@ file=${list[0]}
 
 if [[ $file == *\.html ]]; then
     echo "=== Current file: $file ==="
-    python3 -m collect "$file"
+    python3 src/collect.py "$file"
     mv "$file" "data/done"
 
     num=$(($(ls -1 backup | wc -l) + 1))
