@@ -1,6 +1,6 @@
 import generate
 
-def percent(fest, artists, sets, trim=True):
+def percent(fest, artists, sets, limit=5):
     genres = {}
 
     for s in sets:
@@ -14,17 +14,18 @@ def percent(fest, artists, sets, trim=True):
 
         genres[main] += 1
 
-    prune = {
-        k:v for k,v in genres.items()
-        if k is not None
-        and v > 1
-    }
-
-    total = sum(prune.values())
     order = sorted(
-        prune.items(),
-        key=lambda t: t[1]
-    )[::-1]
+        genres.items(),
+        key=lambda t: -t[1] * bool(t[0])
+    )
+
+    total = sum(genres.values())
+    rest  = sum(t[1] for t in order[limit:])
+
+    order = [
+        *order[:limit],
+        ('Other', rest)
+    ]
 
     return [
         (k, v / total * 100)
@@ -33,11 +34,11 @@ def percent(fest, artists, sets, trim=True):
 
 
 if __name__ == '__main__':
-    name   = 'info.json'
+    name   = 'json.zlib'
     f, a, s = generate.loads(name)
 
     for fest in f:
-        genres = percent(fest, a, s)
+        genres = percent(fest, a, s)[:-1]
         long   = max(len(t[0]) for t in genres)
 
         print(fest)
