@@ -3,7 +3,7 @@ import pylast
 import bs4
 import re
 
-import json
+import save
 import time
 import sys
 import os
@@ -153,9 +153,11 @@ def init(key, secret):
 
 
 if __name__ == '__main__':
-    tables = None
-    name   = 'info.json'
     args   = sys.argv
+    name   = 'info.json'
+    fests, artists, sets \
+           = save.loads(name)
+
     search = init(
         os.environ['PYLAST_API_KEY'],
         os.environ['PYLAST_API_SECRET']
@@ -167,15 +169,8 @@ if __name__ == '__main__':
     if not os.path.exists(args[1]):
         exit('File not found.')
 
-    with open(name) as file:
-        data   = file.read()
-        tables = json.loads(data)
-
-        file.close()
-
     with open(args[1], encoding='utf-8') as file:
         html = file.read()
-        fests, artists, sets = tables
         [f, y], d, p, n = parse(html)
 
         if f not in fests:
@@ -203,12 +198,4 @@ if __name__ == '__main__':
 
         file.close()
 
-    with open(name, 'w') as file:
-        data = json.dumps(
-            tables,
-            sort_keys=True,
-            indent=4
-        )
-
-        file.write(data)
-        file.close()
+    save.dumps(tables, name)
