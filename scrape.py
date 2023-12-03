@@ -3,6 +3,7 @@ import pylast
 import bs4
 import re
 
+import json
 import time
 import sys
 import os
@@ -18,15 +19,27 @@ def strdiff(name, match):
 
 
 def parse(html):
-    soup = bs4.BeautifulSoup(
-        html, 'html.parser'
-    )
+    css = {
+        'old': 'yKMVIe',
+        'new': 'PZPZlf ssJ7i xgAzOe',
+        'loc': 'LrzXr kno-fv wHYlTd z8gr9e',
+        'set': 'nxucXc CxwsZe'
+    }
 
-    span = soup.find_all(
-        'span', class_='nxucXc CxwsZe'
-    )
+    soup  = bs4.BeautifulSoup(html, 'html.parser')
+    names = soup.find_all('span', class_=css['set'])
+    info  = soup.find_all('span', class_=css['loc'])
+    old   = soup.find('span', class_=css['old'])
+    new   = soup.find('div',  class_=css['new'])
 
-    return [s.string for s in span]
+    dates = info[1] if info[0].a else info[0]
+    place = info[0] if info[0].a else info[1]
+    fest  = old or new
+
+    return fest.string.split()[1::-1], \
+           dates.string.split(' – ') , \
+           place.a.string            , \
+           [s.string for s in names]
 
 
 def memoize():
@@ -67,12 +80,18 @@ def init(key, secret):
 
     best = memoize()
 
-    def lookup(name):
+    def lookup(name, cache):
         artist = network.get_artist(name)
-        items  = artist.get_top_tags(limit=15)
-        summ   = artist.get_bio('summary')
         corr   = artist.get_correction()
+        time.sleep(DELAY)
+
+        if corr in cache:
+            return corr, cache[corr]
+
+        summ   = artist.get_bio_summary()
+        items  = artist.get_top_tags(limit=15)
         tags   = [t.item for t in items]
+        time.sleep(DELAY)
 
         woman  = any(
             'female' in t.name
@@ -85,17 +104,16 @@ def init(key, secret):
             and 'female' not in t.name
         ][:5]
 
-        if re.match(r'[^\n]+\n\n1', summ):
-            alt = genres[:1]
-        else:
-            alt = genres
+        mat = re.match(r'[^\n]+\n\n1', summ)
+        alt = genres[:1] if mat else genres
 
-        return corr          , \
-            best(alt)        , \
-            f'woman: {woman}', \
-            [t.name for t in genres]
+        return corr, {
+            'main'  : (t := best(alt)) and t.name,
+            'genres': [t.name for t in genres],
+            'woman' : woman
+        }
 
-    def backup(name):
+    def backup(name, cache):
         regex = re.compile(r'("[^"]+"|\([^()]+\))')
         paren = regex.sub('', name)
 
@@ -109,29 +127,29 @@ def init(key, secret):
             artist = regex.sub('', match)
 
             if strdiff(paren, artist) > 0.9:
-                return lookup(match)
+                return lookup(match, cache)
 
         return name, [], None
 
-    def search(name):
-        res = lookup(name)
-        time.sleep(DELAY)
+    def search(name, cache):
+        res = lookup(name, cache)
 
-        if (res := lookup(name))[1]:
+        if res[1]['main']:
             return res
 
-        return backup(name)
+        return backup(name, cache)
 
     return search
 
 
 if __name__ == '__main__':
+    tables = None
+    name   = 'info.json'
     args   = sys.argv
     search = init(
         os.environ['PYLAST_API_KEY'],
         os.environ['PYLAST_API_SECRET']
     )
-
 
     if len(args) == 1:
         exit('Please supply a file.')
@@ -139,12 +157,48 @@ if __name__ == '__main__':
     if not os.path.exists(args[1]):
         exit('File not found.')
 
+    with open(name) as file:
+        data   = file.read()
+        tables = json.loads(data)
+
+        file.close()
+
     with open(args[1], encoding='utf-8') as file:
-        html  = file.read()
-        names = parse(html)
+        html = file.read()
+        fests, artists, sets = tables
+        [f, y], d, p, n = parse(html)
 
-        for n in names:
-            print(*search(n), sep='\n\t')
-            time.sleep(1)
+        if f not in fests:
+            fests[f] = {
+                'place': p,
+                'dates': {}
+            }
 
+        dates = fests[f]['dates']
+        year  = int(y)
+
+        if year not in dates:
+            dates[year] = d
+
+        for a in n:
+            c, g = search(a, artists)
+            tup  = (f, c, year)
+            sets.append(tup)
+
+            if c not in artists:
+                artists[c] = g
+
+                if not g['genres']:
+                    print(f'Not Found: {c}')
+
+        file.close()
+
+    with open(name, 'w') as file:
+        data = json.dumps(
+            tables,
+            sort_keys=True,
+            indent=4
+        )
+
+        file.write(data)
         file.close()
