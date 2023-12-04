@@ -84,7 +84,8 @@ def init(key, secret):
 
         genres = [
             t for t in tags
-            if  t.name != 'seen live'
+            if  t.name != 'USA'
+            and t.name != 'seen live'
             and 'female' not in t.name
         ][:5]
 
