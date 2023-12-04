@@ -9,8 +9,6 @@ def loads(name):
         comp = file.read()
         data = zlib.decompress(comp)
 
-        file.close()
-
     return json.loads(data)
 
 
@@ -18,16 +16,15 @@ def dumps(tables, name):
     with open(name, 'wb') as file:
         data = json.dumps(tables)
         byte = data.encode()
-        comp = zlib.compress(byte)
 
+        comp = zlib.compress(byte)
         file.write(comp)
-        file.close()
 
 
 def parse(html):
     css = {
         'old': 'yKMVIe',
-        'new': 'PZPZlf ssJ7i xgAzOe',
+        'new': 'PZPZlf',
         'loc': 'LrzXr kno-fv wHYlTd z8gr9e',
         'set': 'nxucXc CxwsZe'
     }
@@ -39,9 +36,13 @@ def parse(html):
     old   = soup.find('span', class_=css['old'])
     new   = soup.find('div',  class_=css['new'])
 
+    title = (old or new).string.split()
     dates = place = ''
-    fest  = (old or new).string \
-                        .split()[1::-1]
+
+    fest = [
+        next(map(str.isalpha, title)),
+        next(map(str.isdigit, title))
+    ]
 
     if info[0].a:
         if len(info) > 1:
