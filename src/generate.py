@@ -40,8 +40,8 @@ def parse(html):
     dates = place = ''
 
     fest = [
-        next(map(str.isalpha, title)),
-        next(map(str.isdigit, title))
+        next(filter(str.isalpha, title)),
+        next(filter(str.isdigit, title))
     ]
 
     if info[0].a:
