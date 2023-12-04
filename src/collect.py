@@ -148,10 +148,14 @@ def append(html, fests, artists, sets):
 
     for a in n:
         c, g = search(a, artists)
-        tup  = (f, c, year)
 
-        if tup not in sets:
-            sets.append(tup)
+        if c not in sets:
+            sets[c] = {}
+
+        if year not in sets[c]:
+            sets[c][year] = {}
+
+        sets[c][year][f] = 'Undercard'
 
         if c not in artists:
             artists[c] = g
