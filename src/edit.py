@@ -19,21 +19,47 @@ def replace(pred, repl, cache):
         if not pred(val, cache):
             continue
 
-        cache[val] = repl(val)
+        cache[val] \
+            = repl(val, cache)
+
+
+def billing(lines, sets):
+    res = {}
+
+    def update(v, c):
+        end = c[v]
+
+        for b, f, y in res[v]:
+            c[v][int(y)][f] = b
+
+        return end
+
+    for s in lines:
+        k, *v = s.split()
+
+        if k not in res:
+            res[k] = []
+
+        res[k].append(v)
+
+    replace(
+        lambda v,c: v in res,
+        update,
+        sets
+    )
 
 
 if __name__ == '__main__':
-    name    = 'json.zlib'
-    tables  = generate.loads(name)
+    name   = 'json.zlib'
+    tables = generate.loads(name)
 
     search = collect.init(
         os.environ['PYLAST_API_KEY'],
         os.environ['PYLAST_API_SECRET']
     )
 
-    lookup(
-        lambda v,c: 'USA' in c[v]['genres'],
-        tables[1]
-    )
+    with open('headliners.txt') as file:
+        lines = file.readlines()
+        billing(lines, tables[2])
 
     generate.dumps(tables, name)
