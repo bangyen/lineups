@@ -35,14 +35,26 @@ def parse(html):
     soup  = bs4.BeautifulSoup(html, 'html.parser')
     names = soup.find_all('span', class_=css['set'])
     info  = soup.find_all('span', class_=css['loc'])
+
     old   = soup.find('span', class_=css['old'])
     new   = soup.find('div',  class_=css['new'])
 
-    dates = info[1] if info[0].a else info[0]
-    place = info[0] if info[0].a else info[1]
-    fest  = old or new
+    dates = place = ''
+    fest  = (old or new).string \
+                        .split()[1::-1]
 
-    return fest.string.split()[1::-1], \
-           dates.string.split(' – ') , \
-           place.a.string            , \
+    if info[0].a:
+        if len(info) > 1:
+            dates = info[1].string
+
+        place = info[0].a.string
+    else:
+        if len(info) > 1:
+            place = info[1].a.string
+
+        dates = info[0].string
+
+    return fest              , \
+           place             , \
+           dates.split(' – '), \
            [s.string for s in names]

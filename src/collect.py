@@ -132,7 +132,7 @@ def init(key, secret):
 
 
 def append(html, fests, artists, sets):
-    [f, y], d, p, n = generate.parse(html)
+    [f, y], p, d, n = generate.parse(html)
 
     if f not in fests:
         fests[f] = {
