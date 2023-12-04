@@ -179,6 +179,5 @@ if __name__ == '__main__':
     with open(args[1], encoding='utf-8') as file:
         html = file.read()
         append(html, *tables)
-        file.close()
 
     generate.dumps(tables, name)
