@@ -19,7 +19,7 @@ def percent(pred, artists, sets, limit=7):
         key=lambda t: -t[1] * bool(t[0])
     )
 
-    total = sum(genres.values())
+    total = sum(genres.values()) or 1
     rest  = sum(t[1] for t in order[limit:])
 
     order = [
@@ -44,7 +44,11 @@ if __name__ == '__main__':
                 and s[2] == year
 
         genres = percent(pred, a, s)[:-1]
-        long   = max(len(t[0]) for t in genres)
+
+        if len(genres) == 0:
+            continue
+
+        long = max(len(t[0]) for t in genres)
         print(fest, year)
 
         for k,v in genres:
