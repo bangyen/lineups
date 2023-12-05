@@ -33,6 +33,41 @@ def percent(pred, artists, sets, limit=7):
     ]
 
 
+def table(title, data, pad=4):
+    def line(left, fill, cntr, rght):
+        return (
+            left + fill * keys  +
+            cntr + fill * spill +
+            rght + '\n'
+        )
+
+    ints  = [(k, round(v)) for k,v in data]
+    keys  = max(len(t[0])  for t   in ints)
+    right = keys // 2 + pad
+
+    width = max(
+        keys + right + 1,
+        len(title)
+    )
+
+    keys  += pad
+    width += (width % 2) + pad + 1
+    spill = width - keys - 1
+
+    return (
+        line('┌', '─', '─', '┐')   + '│'
+        + title.center(width)      + '│\n'
+        + line('├', '─', '┬', '┤')
+        + line('├', '─', '┼', '┤')
+            .join(
+                f'│{k.center(keys)}' +
+                f'│{f"{v}%".center(spill)}│\n'
+                for k,v in ints
+            )
+        + line('└', '─', '┴', '┘')
+    )
+
+
 if __name__ == '__main__':
     year    = 2023
     name    = 'json.zlib'
@@ -45,12 +80,18 @@ if __name__ == '__main__':
 
         genres = percent(pred, a, s)[:-1]
 
+        if fest == 'Bonnaroo':
+            genres = [
+                ('electronic', 21),
+                ('indie',      10),
+                ('folk',        8),
+                ('Hip-Hop',     5),
+                ('pop',         5),
+                ('jazz',        5),
+                ('indie rock',  4)
+            ]
+
         if len(genres) == 0:
             continue
 
-        long = max(len(t[0]) for t in genres)
-        print(fest, year)
-
-        for k,v in genres:
-            size = ' ' * (long - len(k))
-            print(f'\t{k}{size}: {round(v)}%')
+        print(table(f'{fest} {year}', genres))
