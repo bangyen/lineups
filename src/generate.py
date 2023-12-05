@@ -1,3 +1,4 @@
+import src.classes as classes
 import zlib
 import json
 import bs4
@@ -7,15 +8,17 @@ def loads(name):
 
     with open(name, 'rb') as file:
         comp = file.read()
-        data = zlib.decompress(comp)
+        byte = zlib.decompress(comp)
+        data = json.loads(byte)
 
-    return json.loads(data)
+    return classes.Database(data)
 
 
 def dumps(tables, name):
     with open(name, 'wb') as file:
-        data = json.dumps(tables)
-        byte = data.encode()
+        data = tables.tables
+        strs = json.dumps(data)
+        byte = strs.encode()
 
         comp = zlib.compress(byte)
         file.write(comp)
