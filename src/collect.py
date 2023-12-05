@@ -1,7 +1,5 @@
 import src.generate as generate
 import time
-import sys
-import os
 
 import difflib
 import pylast
@@ -131,7 +129,8 @@ def init(key, secret):
     return search
 
 
-def append(html, fests, artists, sets):
+def append(html, search, tables):
+    fests, artists, sets = tables
     [f, y], p, d, n = generate.parse(html)
 
     if f not in fests:
@@ -162,26 +161,3 @@ def append(html, fests, artists, sets):
 
             if not g['genres']:
                 print(f'Not Found: {c}')
-
-
-if __name__ == '__main__':
-    args   = sys.argv
-    name   = 'json.zlib'
-    tables = generate.loads(name)
-
-    search = init(
-        os.environ['PYLAST_API_KEY'],
-        os.environ['PYLAST_API_SECRET']
-    )
-
-    if len(args) == 1:
-        exit('Please supply a file.')
-
-    if not os.path.exists(args[1]):
-        exit('File not found.')
-
-    with open(args[1], encoding='utf-8') as file:
-        html = file.read()
-        append(html, *tables)
-
-    generate.dumps(tables, name)

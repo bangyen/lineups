@@ -2,7 +2,7 @@
 
 for file in data/*.html; do
     echo "=== Current file: $file ==="
-    python3 -m src.collect "$file"
+    python3 -m main "$file"
 
     if [ $? -eq 0 ]; then
         num=$(($(ls -1 backup | wc -l) + 1))
