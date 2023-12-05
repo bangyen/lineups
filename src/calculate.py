@@ -1,4 +1,5 @@
 import src.generate as generate
+import prettytable  as pt
 
 def percent(pred, artists, sets, limit=7):
     genres = {}
@@ -33,39 +34,40 @@ def percent(pred, artists, sets, limit=7):
     ]
 
 
-def table(title, data, pad=4):
-    def line(left, fill, cntr, rght):
-        return (
-            left + fill * keys  +
-            cntr + fill * spill +
-            rght + '\n'
-        )
+def table(title, data):
+    def change(pos, char, junc=True):
+        infix = '_junction' * junc
+        attr  = f'{pos}{infix}_char'
+        setattr(tab, attr, char)
 
-    ints  = [(k, round(v)) for k,v in data]
-    keys  = max(len(t[0])  for t   in ints)
-    right = keys // 2 + pad
-
-    width = max(
-        keys + right + 1,
-        len(title)
+    tab = pt.PrettyTable(
+        ['genre', 'prcnt']
     )
 
-    keys  += pad
-    width += (width % 2) + pad + 1
-    spill = width - keys - 1
+    data = [
+        (k, f'{v}%')
+        for k,v in data
+    ]
 
-    return (
-        line('┌', '─', '─', '┐')   + '│'
-        + title.center(width)      + '│\n'
-        + line('├', '─', '┬', '┤')
-        + line('├', '─', '┼', '┤')
-            .join(
-                f'│{k.center(keys)}' +
-                f'│{f"{v}%".center(spill)}│\n'
-                for k,v in ints
-            )
-        + line('└', '─', '┴', '┘')
-    )
+    change('bottom_right', '╯')
+    change('bottom_left',  '╰')
+    change('top_right',    '╮')
+    change('top_left',     '╭')
+    change('bottom',       '┴')
+    change('top',          '┬')
+    change('right',        '┤')
+    change('left',         '├')
+    change('horizontal', '─', False)
+    change('vertical',   '│', False)
+
+    tab.align['genre'] = 'l'
+    tab.align['prcnt'] = 'r'
+    tab.padding_width  = 2
+    tab.header = False
+    tab.title  = title
+    tab.add_rows(data)
+
+    return tab
 
 
 if __name__ == '__main__':
