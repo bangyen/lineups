@@ -1,4 +1,6 @@
 .DS_Store
+secret.sh
+json.zlib
 backup/
 data/
 
