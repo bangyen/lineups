@@ -8,10 +8,9 @@ def percent(pred, tables, limit=7):
         if not pred(s):
             continue
 
-        ind  = (s[1], 'main')
+        ind  = (s['artist'], 'main')
         main = tables.get_artist(ind)
         prev = genres.get(main, 0)
-
         genres[main] = prev + 1
 
     order = sorted(
@@ -44,7 +43,7 @@ def table(title, data):
     )
 
     data = [
-        (k, f'{v}%')
+        (k, f'{round(v)}%')
         for k,v in data
     ]
 

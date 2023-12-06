@@ -22,11 +22,11 @@ class Database(tuple):
 
     def get_fest(self, val):
         fests = self.fests
-        self.get(fests, val)
+        return self.get(fests, val)
 
-    def get_artis(self, val):
+    def get_artist(self, val):
         artists = self.artists
-        self.get(artists, val)
+        return self.get(artists, val)
 
     @staticmethod
     def add(table, args):
