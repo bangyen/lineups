@@ -1,5 +1,6 @@
 import src.generate as generate
 import prettytable  as pt
+import sys
 
 def percent(pred, tables, limit=7):
     genres = {}
@@ -69,7 +70,10 @@ def table(title, data):
 
 
 if __name__ == '__main__':
-    year   = 2023
+    if len(args := sys.argv) == 1:
+        exit('Please provide a year.')
+
+    year   = int(args[1])
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
