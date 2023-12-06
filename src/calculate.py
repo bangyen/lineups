@@ -71,7 +71,7 @@ def table(title, data):
 
 if __name__ == '__main__':
     year   = 2023
-    name   = 'json.zlib'
+    name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
     for fest in tables.fests:

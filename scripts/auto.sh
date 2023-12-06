@@ -8,7 +8,7 @@ for file in data/*.html; do
         num=$(($(ls -1 backup | wc -l) + 1))
         echo "=== Creating backup_$num.zlib ==="
 
-        cp json.zlib backup/backup_$num.zlib
+        cp scripts/json.zlib backup/backup_$num.zlib
         mv "$file" "data/done"
         exit 0
     else

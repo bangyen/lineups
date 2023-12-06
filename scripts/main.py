@@ -5,7 +5,7 @@ import os
 
 if __name__ == '__main__':
     args   = sys.argv
-    name   = 'json.zlib'
+    name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
     search = collect.init(

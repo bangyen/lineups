@@ -23,7 +23,7 @@ def replace(pred, repl, cache):
             = repl(val, cache)
 
 
-def billing(lines, sets):
+def billing(lines, tables):
     res = {}
 
     def update(v, c):
@@ -45,12 +45,12 @@ def billing(lines, sets):
     replace(
         lambda v,c: v in res,
         update,
-        sets
+        tables.sets
     )
 
 
 if __name__ == '__main__':
-    name   = 'json.zlib'
+    name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
     search = collect.init(
@@ -60,6 +60,6 @@ if __name__ == '__main__':
 
     with open('headliners.txt') as file:
         lines = file.readlines()
-        billing(lines, tables[2])
+        billing(lines, tables)
 
     generate.dumps(tables, name)
