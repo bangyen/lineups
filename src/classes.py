@@ -29,11 +29,13 @@ class Database(tuple):
         self.get(artists, val)
 
     @staticmethod
-    def add(table, val):
-        out  = get(table, val[:-2])
-        k, v = val[-2:]
+    def add(table, args):
+        out  = Database.get(
+            table, args[:-2]
+        )
 
-        table[k] = v
+        key, val   = args[-2:]
+        table[key] = val
 
     def add_fest(self, val):
         fests = self.fests
