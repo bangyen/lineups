@@ -42,11 +42,6 @@ def parse(html):
     title = (old or new).string.split()
     dates = place = ''
 
-    fest = [
-        next(filter(str.isalpha, title)),
-        next(filter(str.isdigit, title))
-    ]
-
     if info[0].a:
         if len(info) > 1:
             dates = info[1].string
@@ -58,7 +53,15 @@ def parse(html):
 
         dates = info[0].string
 
-    return fest              , \
-           place             , \
-           dates.split(' – '), \
-           [s.string for s in names]
+    fest  = next(filter(str.isalpha, title))
+    year  = next(filter(str.isdigit, title))
+    dates = dates.split(' - ')
+
+    wrap  = {
+        'fest' : fest,
+        'year' : int(year),
+        'place': (fest, 'place', place),
+        'dates': (fest, 'dates', dates)
+    }
+
+    return wrap, [s.string for s in names]

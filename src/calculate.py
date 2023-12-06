@@ -1,19 +1,18 @@
 import src.generate as generate
 import prettytable  as pt
 
-def percent(pred, artists, sets, limit=7):
+def percent(pred, tables, limit=7):
     genres = {}
 
-    for s in sets:
+    for s in tables.sets:
         if not pred(s):
             continue
 
-        main = artists[s[1]]['main']
+        ind  = (s[1], 'main')
+        main = tables.get_artist(ind)
+        prev = genres.get(main, 0)
 
-        if main not in genres:
-            genres[main] = 0
-
-        genres[main] += 1
+        genres[main] = prev + 1
 
     order = sorted(
         genres.items(),
@@ -57,8 +56,8 @@ def table(title, data):
     change('top',          '┬')
     change('right',        '┤')
     change('left',         '├')
-    change('horizontal', '─', False)
-    change('vertical',   '│', False)
+    change('horizontal',   '─', False)
+    change('vertical',     '│', False)
 
     tab.align['genre'] = 'l'
     tab.align['prcnt'] = 'r'
@@ -71,29 +70,19 @@ def table(title, data):
 
 
 if __name__ == '__main__':
-    year    = 2023
-    name    = 'json.zlib'
-    f, a, s = generate.loads(name)
+    year   = 2023
+    name   = 'json.zlib'
+    tables = generate.loads(name)
 
-    for fest in f:
+    for fest in tables.fests:
         def pred(s):
-            return  s[0] == fest \
-                and s[2] == year
+            return  s['fest'] == fest \
+                and s['year'] == year
 
-        genres = percent(pred, a, s)[:-1]
-
-        if fest == 'Bonnaroo':
-            genres = [
-                ('electronic', 21),
-                ('indie',      10),
-                ('folk',        8),
-                ('Hip-Hop',     5),
-                ('pop',         5),
-                ('jazz',        5),
-                ('indie rock',  4)
-            ]
+        genres = percent(pred, tables)[:-1]
 
         if len(genres) == 0:
             continue
 
-        print(table(f'{fest} {year}', genres))
+        title = f'{fest} {year}'
+        print(table(title, genres))

@@ -10,7 +10,8 @@ if __name__ == '__main__':
 
     search = collect.init(
         os.environ['PYLAST_API_KEY'],
-        os.environ['PYLAST_API_SECRET']
+        os.environ['PYLAST_API_SECRET'],
+        tables
     )
 
     if len(args) == 1:

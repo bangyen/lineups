@@ -53,15 +53,16 @@ def memoize():
     return best
 
 
-def init(key, secret):
+def init(key, secret, tables):
     network = pylast.LastFMNetwork(
         api_key=key,
         api_secret=secret
     )
 
-    best = memoize()
+    cache = tables.artists
+    best  = memoize()
 
-    def lookup(name, cache):
+    def lookup(name):
         if name in cache:
             return name, cache[name]
 
@@ -96,7 +97,7 @@ def init(key, secret):
             'woman' : woman
         }
 
-    def backup(name, cache):
+    def backup(name):
         regex = re.compile(r'("[^"]+"|\([^()]+\))')
         paren = regex.sub('', name)
 
@@ -104,13 +105,12 @@ def init(key, secret):
             network.search_for_artist(paren) \
                    .get_next_page()
 
-        items = [a.name for a in results]
-
-        for match in items:
+        for obj in results:
+            match  = obj.name
             artist = regex.sub('', match)
 
             if strdiff(paren, artist) > 0.9:
-                return lookup(match, cache)
+                return lookup(match)
 
         return name, {
             'main'  : None,
@@ -118,46 +118,33 @@ def init(key, secret):
             'woman' : None
         }
 
-    def search(name, cache):
-        res = lookup(name, cache)
+    def search(name):
+        res = lookup(name)
 
         if res[1]['main']:
             return res
 
-        return backup(name, cache)
+        return backup(name)
 
     return search
 
 
 def append(html, search, tables):
-    fests, artists, sets = tables
-    [f, y], p, d, n = generate.parse(html)
+    wrap, names = generate.parse(html)
 
-    if f not in fests:
-        fests[f] = {
-            'place': p,
-            'dates': {}
-        }
+    tables.add_fest(wrap['place'])
+    tables.add_fest(wrap['dates'])
 
-    dates = fests[f]['dates']
-    year  = int(y)
+    for n in names:
+        c, g = search(n)
+        tables.add_artist((c, g))
 
-    if year not in dates:
-        dates[year] = d
+        tables.add_set(
+            fest   = wrap['fest'],
+            year   = wrap['year'],
+            bill   = 'Undercard',
+            artist = c
+        )
 
-    for a in n:
-        c, g = search(a, artists)
-
-        if c not in sets:
-            sets[c] = {}
-
-        if year not in sets[c]:
-            sets[c][year] = {}
-
-        sets[c][year][f] = 'Undercard'
-
-        if c not in artists:
-            artists[c] = g
-
-            if not g['genres']:
-                print(f'Not Found: {c}')
+        if not g['genres']:
+            print(f'Not Found: {c}')
