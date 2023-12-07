@@ -2,6 +2,23 @@ import src.generate as generate
 import prettytable  as pt
 import sys
 
+def compare(gen, year, tables, **kwargs):
+    out = []
+
+    for f in tables.fests:
+        res = percent(
+            lambda s: s['fest'] == f \
+                  and s['year'] == year,
+            tables,
+            **kwargs
+        )
+
+        if gen in res:
+            out.append((f, res[gen]))
+
+    return sorted(out, key=lambda t: -t[1])
+
+
 def percent(pred, tables, limit=7):
     genres = {}
 
@@ -27,10 +44,10 @@ def percent(pred, tables, limit=7):
         ('Other', rest)
     ]
 
-    return [
-        (k, v / total * 100)
+    return {
+        k:(v / total * 100)
         for k,v in order
-    ]
+    }
 
 
 def table(title, data):
@@ -73,19 +90,19 @@ if __name__ == '__main__':
     if len(args := sys.argv) == 1:
         exit('Please provide a year.')
 
+    genre  = 'electronic'
     year   = int(args[1])
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
-    for fest in tables.fests:
-        def pred(s):
-            return  s['fest'] == fest \
-                and s['year'] == year
+    output = compare(
+        genre, year, tables,
+        limit=10
+    )
 
-        genres = percent(pred, tables)[:-1]
+    data = table(
+        f'{genre.title()} Music in {year}',
+        output
+    )
 
-        if len(genres) == 0:
-            continue
-
-        title = f'{fest} {year}'
-        print(table(title, genres))
+    print(data)
