@@ -19,7 +19,7 @@ def compare(gen, year, tables, **kwargs):
     return sorted(out, key=lambda t: -t[1])
 
 
-def percent(pred, tables, limit=7):
+def percent(pred, tables, limit=None):
     genres = {}
 
     for s in tables.sets:
@@ -35,6 +35,9 @@ def percent(pred, tables, limit=7):
         genres.items(),
         key=lambda t: -t[1] * bool(t[0])
     )
+
+    if limit is None:
+        limit = len(order) - 1
 
     total = sum(genres.values()) or 1
     rest  = sum(t[1] for t in order[limit:])
@@ -96,8 +99,7 @@ if __name__ == '__main__':
     tables = generate.loads(name)
 
     output = compare(
-        genre, year, tables,
-        limit=10
+        genre, year, tables
     )
 
     data = table(
