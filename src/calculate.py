@@ -2,21 +2,40 @@ import src.generate as generate
 import prettytable  as pt
 import sys
 
-def compare(gen, year, tables, **kwargs):
+def compare_fests(gen, year, tables, **kwargs):
     out = []
 
-    for f in tables.fests:
+    for fest in tables.fests:
         res = percent(
-            lambda s: s['fest'] == f \
+            lambda s: s['fest'] == fest \
                   and s['year'] == year,
             tables,
             **kwargs
         )
 
         if gen in res:
-            out.append((f, res[gen]))
+            out.append((fest, res[gen]))
 
-    return sorted(out, key=lambda t: -t[1])
+    return sorted(out, reverse=True)
+
+
+def compare_years(gen, fest, tables, **kwargs):
+    out = []
+
+    for y in tables.fests[fest]['dates']:
+        year = int(y.split()[-1])
+
+        res = percent(
+            lambda s: s['fest'] == fest \
+                  and s['year'] == year,
+            tables,
+            **kwargs
+        )
+
+        if gen in res:
+            out.append((year, res[gen]))
+
+    return sorted(out, reverse=True)
 
 
 def percent(pred, tables, limit=None):
@@ -91,19 +110,20 @@ def table(title, data):
 
 if __name__ == '__main__':
     if len(args := sys.argv) == 1:
-        exit('Please provide a year.')
+        exit('Missing argument.')
 
     genre  = 'electronic'
-    year   = int(args[1])
+    const  = args[1]
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
-    output = compare(
-        genre, year, tables
+    output = compare_years(
+        genre, const, tables
     )
 
     data = table(
-        f'{genre.title()} Music in {year}',
+        (f'{genre.title()} '
+         f'Music ({const})'),
         output
     )
 
