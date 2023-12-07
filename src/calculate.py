@@ -2,40 +2,43 @@ import src.generate as generate
 import prettytable  as pt
 import sys
 
-def compare_fests(gen, year, tables, **kwargs):
-    out = []
+def compare(loop, args, order):
+    def inner(gen, arg, tables, **kwargs):
+        out = []
 
-    for fest in tables.fests:
-        res = percent(
-            lambda s: s['fest'] == fest \
-                  and s['year'] == year,
-            tables,
-            **kwargs
-        )
+        for val in loop(tables, arg):
+            fest, year = args(arg, val)
+            year = int(year)
 
-        if gen in res:
-            out.append((fest, res[gen]))
+            res = percent(
+                lambda s: s['fest'] == fest \
+                      and s['year'] == year,
+                tables,
+                **kwargs
+            )
 
-    return sorted(out, reverse=True)
+            if gen in res:
+                out.append((val, res[gen]))
+
+        return sorted(out, key=order)
+
+    return inner
 
 
-def compare_years(gen, fest, tables, **kwargs):
-    out = []
+compare_fests \
+    = compare(
+        lambda t, a: t.fests,
+        lambda a, v: (v, a),
+        lambda t: -t[1]
+    )
 
-    for y in tables.fests[fest]['dates']:
-        year = int(y.split()[-1])
 
-        res = percent(
-            lambda s: s['fest'] == fest \
-                  and s['year'] == year,
-            tables,
-            **kwargs
-        )
-
-        if gen in res:
-            out.append((year, res[gen]))
-
-    return sorted(out, reverse=True)
+compare_years \
+    = compare(
+        lambda t, a: t.fests[a]['dates'],
+        lambda a, v: (a, v.split()[-1]),
+        lambda t: t[0]
+    )
 
 
 def percent(pred, tables, limit=None):
@@ -109,15 +112,20 @@ def table(title, data):
 
 
 if __name__ == '__main__':
-    if len(args := sys.argv) == 1:
+    if len(args := sys.argv) < 3:
         exit('Missing argument.')
 
-    genre  = 'electronic'
-    const  = args[1]
+    genre  = args[1]
+    const  = args[2]
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
-    output = compare_years(
+    if const in tables.fests:
+        func = compare_years
+    elif const.isdigit():
+        func = compare_fests
+
+    output = func(
         genre, const, tables
     )
 
