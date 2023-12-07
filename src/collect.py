@@ -131,6 +131,11 @@ def init(key, secret, tables):
 
 def append(html, search, tables):
     wrap, names = generate.parse(html)
+    fest = wrap['fest']
+    year = wrap['year']
+
+    if tables.get_set(fest=fest, year=year):
+        return
 
     tables.add_fest(wrap['place'])
     tables.add_fest(wrap['dates'])
@@ -140,8 +145,8 @@ def append(html, search, tables):
         tables.add_artist((c, g))
 
         tables.add_set(
-            fest   = wrap['fest'],
-            year   = wrap['year'],
+            fest   = fest,
+            year   = year,
             bill   = 'Undercard',
             artist = c
         )

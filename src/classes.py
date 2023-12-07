@@ -28,6 +28,17 @@ class Database(tuple):
         artists = self.artists
         return self.get(artists, val)
 
+    def get_set(self, **keys):
+        res  = [
+            s for s in self.sets
+            if s | keys == s
+        ]
+
+        if len(res) == 1:
+            return res[0]
+
+        return res
+
     @staticmethod
     def add(table, args):
         out  = Database.get(
