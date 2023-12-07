@@ -2,64 +2,49 @@ import src.generate as generate
 import src.collect  as collect
 import os
 
-def lookup(pred, cache):
-    for val in cache:
-        if not pred(val, cache):
-            continue
-
-        c, g = search(val, {})
-        cache[c] = g
-
-        if c != val:
-            del cache[val]
-
-
-def replace(pred, repl, cache):
-    for val in cache:
-        if not pred(val, cache):
-            continue
-
-        cache[val] \
-            = repl(val, cache)
-
-
 def billing(lines, tables):
-    res = {}
+    opts  = ('Headliner', 'Subheadliner')
+    names = []
 
-    def update(v, c):
-        end = c[v]
+    for row in lines:
+        args = row.rsplit(maxsplit=3)
+        a, b, f, y = args
+        y = int(y)
 
-        for b, f, y in res[v]:
-            c[v][int(y)][f] = b
+        if a not in tables.artists:
+            for n in tables.artists:
+                same = collect.strdiff(a, n)
 
-        return end
+                if same > 0.9:
+                    names.append((a, n))
+                    a = n
 
-    for s in lines:
-        k, *v = s.split()
+        if b not in opts:
+            exit(args)
 
-        if k not in res:
-            res[k] = []
+        res = tables.get_set(
+            fest=f,
+            year=y,
+            artist=a
+        )
 
-        res[k].append(v)
+        res['bill'] = b
 
-    replace(
-        lambda v,c: v in res,
-        update,
-        tables.sets
-    )
+    size = max(len(t[1]) for t in names)
+
+    for k, v in names:
+        diff = ' ' * (size -len(k))
+        print(f'{k}{diff}  ==>  {v}')
 
 
 if __name__ == '__main__':
+    folder = 'data/billing/'
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
-    search = collect.init(
-        os.environ['PYLAST_API_KEY'],
-        os.environ['PYLAST_API_SECRET']
-    )
-
-    with open('headliners.txt') as file:
-        lines = file.readlines()
-        billing(lines, tables)
+    for path in os.listdir(folder):
+        with open(folder + path) as file:
+            lines = file.readlines()
+            billing(lines, tables)
 
     generate.dumps(tables, name)
