@@ -1,3 +1,4 @@
+import src.generate as generate
 import re
 
 def match(lst):
@@ -16,7 +17,87 @@ def match(lst):
     return len(lst) - rest
 
 
-def parser(lst):
+def split(regex, inp):
+    alt = fr'({regex})(.*)'
+    mat = re.match(alt, inp)
+
+    one = mat.group(1)
+    two = mat.group(2)
+
+    return one, two
+
+
+def conv(val):
+    def get(tab, key):
+        if isinstance(key, str):
+            return tab[key][val]
+
+        return key[val]
+
+    def func(op):
+        s = f'lambda a, b: a {op} b'
+        return eval(s)
+
+    keyw = ('and', 'or', '==', '!=')
+
+    if val in keyw:
+        return func(val)
+    if val.isdigit():
+        return int(val)
+    if val[0] == '"':
+        return val[1:-1]
+    if val == 'None':
+        return
+    if val == 'key':
+        return lambda t, k: k
+
+    return get
+
+
+def output(pair):
+    table, sub = pair
+    fmt = isinstance(table, dict)
+
+    for n in sub:
+        print(n if fmt else '')
+
+        if fmt:
+            dct = table[n]
+        else:
+            dct = n
+
+        for key in dct:
+            tab = '\t' * fmt
+            val = dct[key]
+
+            print(f'{tab}{key}: {val}')
+
+
+def test(inp, tables):
+    def branch(ast, key):
+        if isinstance(ast, tuple):
+            op, x, y = ast
+            a = branch(x, key)
+            b = branch(y, key)
+            return op(a, b)
+
+        if callable(ast):
+            return ast(tab, key)
+
+        return ast
+
+    if inp is None:
+        return
+
+    tab = getattr(tables, inp[0])
+
+    return tab, [
+        k for k in tab
+        if branch(inp[1], k)
+    ]
+
+
+def parse(lst):
     def branch(inp):
         tok = inp[0]
 
@@ -26,7 +107,9 @@ def parser(lst):
             one = branch(sub)
         else:
             end = 3
-            a, op, b = inp[:3]
+            op  = conv(inp[1])
+            a   = conv(inp[0])
+            b   = conv(inp[2])
             one = (op, a, b)
 
         if len(inp) == end:
@@ -50,7 +133,7 @@ def parser(lst):
         return tab, branch(rest)
 
 
-def lexer(inp):
+def lex(inp):
     def add(reg, val):
         res = split(reg, val)
 
@@ -77,26 +160,19 @@ def lexer(inp):
     return out
 
 
-def split(regex, inp):
-    alt = fr'({regex})(.*)'
-    mat = re.match(alt, inp)
+def run(inp, tables):
+    tok = lex(inp)
+    ast = parse(tok)
 
-    if not mat:
+    if ast is None:
         return
 
-    one = mat.group(1)
-    two = mat.group(2)
-
-    return one, two
-
+    pair = test(ast, tables)
+    output(pair)
 
 if __name__ == '__main__':
-    res = None
+    name   = 'scripts/json.zlib'
+    tables = generate.loads(name)
 
-    while res is None:
-        inp = input('Input: ')
-        tok = lexer(inp)
-        res = parser(tok)
-
-        if res:
-            print(res)
+    inp  = input('Input: ')
+    run(inp, tables)
