@@ -39,17 +39,21 @@ def conv(val):
         return eval(s)
 
     keyw = ('and', 'or', '==', '!=')
+    ltrl = ('True', 'False', 'None')
 
     if val in keyw:
         return func(val)
+    if val in ltrl:
+        return eval(val)
     if val.isdigit():
         return int(val)
     if val[0] == '"':
         return val[1:-1]
-    if val == 'None':
-        return
     if val == 'key':
         return lambda t, k: k
+    if val == '=~':
+        return lambda a, b: \
+               re.search(b, a)
 
     return get
 
@@ -148,9 +152,9 @@ def lex(inp):
 
     while inp:
         regex = (
-            r'\w+|\d+',
-            r'==|!='  ,
-            r'"[^"]*"',
+            r'\w+|\d+' ,
+            r'==|!=|=~',
+            r'"[^"]*"' ,
             r'[()]'
         )
 
@@ -174,5 +178,5 @@ if __name__ == '__main__':
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
 
-    inp  = input('Input: ')
+    inp  = input('Query: ')
     run(inp, tables)
