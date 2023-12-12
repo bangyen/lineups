@@ -1,4 +1,5 @@
 import src.generate as generate
+import sys
 import re
 
 def match(lst):
@@ -177,6 +178,11 @@ def run(inp, tables):
 if __name__ == '__main__':
     name   = 'scripts/json.zlib'
     tables = generate.loads(name)
+    args   = sys.argv
 
-    inp  = input('Query: ')
+    if len(args) > 1:
+        inp = args[1]
+    else:
+        inp = input('Query: ')
+
     run(inp, tables)
