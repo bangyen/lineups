@@ -75,6 +75,36 @@ def percent(pred, tables, limit=None):
     }
 
 
+def overlap(
+        main, year, tables,
+        *fests, diff=True):
+    def num(one, two):
+        a = get(one)
+        b = get(two)
+        c = a & b
+
+        div = len(b if diff else a)
+        res = len(c) / div
+
+        return two, res
+
+    def get(fest):
+        sets = tables.get_set(
+            fest=fest,
+            year=year
+        )
+
+        return {
+            s['artist']
+            for s in sets
+        }
+
+    return [
+        num(main, f)
+        for f in fests
+    ]
+
+
 def table(title, data):
     def change(pos, char, junc=True):
         infix = '_junction' * junc
