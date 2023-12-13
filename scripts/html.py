@@ -21,8 +21,12 @@ if __name__ == '__main__':
         exit('File not found.')
 
     with open(args[1], encoding='utf-8') as file:
+        html        = file.read()
+        wrap, names = generate.parse(html)
+
         collect.append(
-            file.read(),
+            wrap,
+            names,
             search,
             tables
         )

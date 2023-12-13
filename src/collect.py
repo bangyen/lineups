@@ -129,8 +129,7 @@ def init(key, secret, tables):
     return search
 
 
-def append(html, search, tables):
-    wrap, names = generate.parse(html)
+def append(wrap, names, search, tables):
     fest = wrap['fest']
     year = wrap['year']
 
