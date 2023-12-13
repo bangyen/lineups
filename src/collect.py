@@ -5,6 +5,8 @@ import difflib
 import pylast
 import re
 
+CACHED_MIN = 0.9
+SEARCH_MIN = 0.9
 DELAY = 1
 
 def strdiff(name, match):
@@ -63,8 +65,11 @@ def init(key, secret, tables):
     best  = memoize()
 
     def lookup(name):
-        if name in cache:
-            return name, cache[name]
+        for key in cache:
+            diff = strdiff(name, key)
+
+            if diff > CACHED_MIN or name == key:
+                return key, cache[key]
 
         res  = network.get_artist(name)
         corr = handler(res.get_correction, name)
@@ -109,7 +114,7 @@ def init(key, secret, tables):
             match  = obj.name
             artist = regex.sub('', match)
 
-            if strdiff(paren, artist) > 0.9:
+            if strdiff(paren, artist) > SEARCH_MIN:
                 return lookup(match)
 
         return name, {
@@ -133,9 +138,6 @@ def append(wrap, names, search, tables):
     fest = wrap['fest']
     year = wrap['year']
 
-    if tables.get_set(fest=fest, year=year):
-        return
-
     tables.add_fest(wrap['place'])
     tables.add_fest(wrap['dates'])
 
@@ -143,11 +145,18 @@ def append(wrap, names, search, tables):
         c, g = search(n)
         tables.add_artist((c, g))
 
+        args = {
+            'artist': c,
+            'fest'  : fest,
+            'year'  : year
+        }
+
+        if tables.get_set(**args):
+            return
+
         tables.add_set(
-            fest   = fest,
-            year   = year,
-            bill   = 'Undercard',
-            artist = c
+            bill = 'Undercard',
+            **args
         )
 
         if not g['genres']:
