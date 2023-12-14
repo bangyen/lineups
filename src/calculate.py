@@ -84,9 +84,9 @@ def overlap(
         c = a & b
 
         div = len(b if diff else a)
-        res = len(c) / div
+        res = len(c) / div * 100
 
-        return two, res
+        return two, res, list(c)
 
     def get(fest):
         sets = tables.get_set(
@@ -116,7 +116,7 @@ def table(title, data):
     )
 
     data = [
-        (k, f'{round(v)}%')
+        (k, f'{round(v, 1)}%')
         for k,v in data
     ]
 
