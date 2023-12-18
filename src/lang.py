@@ -119,8 +119,9 @@ def parse(lst):
             return one
 
         if inp[end] in keywrd:
-            two = branch(inp[end + 1:])
-            return inp[end], one, two
+            func = conv(inp[end])
+            two  = branch(inp[end + 1:])
+            return func, one, two
 
     if len(lst) < 2:
         return
