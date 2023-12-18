@@ -75,17 +75,3 @@ def billing(lines, tables):
     for k, v in names:
         diff = ' ' * (size -len(k))
         print(f'{k}{diff}  ==>  {v}')
-
-
-if __name__ == '__main__':
-    folder = 'data/billing/'
-    name   = 'scripts/json.zlib'
-    tables = generate.loads(name)
-
-    for path in os.listdir(folder):
-        with open(folder + path) as file:
-            lines = file.readlines()
-            billing(lines, tables)
-
-    interact(tables)
-    generate.dumps(tables, name)

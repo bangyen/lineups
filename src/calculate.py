@@ -76,8 +76,9 @@ def percent(pred, tables, limit=None):
 
 
 def overlap(
-        main, year, tables,
-        *fests, diff=True):
+        main, fests,
+        year, tables,
+        diff=True):
     def num(one, two):
         a = get(one)
         b = get(two)
@@ -139,30 +140,3 @@ def table(title, data):
     tab.add_rows(data)
 
     return tab
-
-
-if __name__ == '__main__':
-    if len(args := sys.argv) < 3:
-        exit('Missing argument.')
-
-    genre  = args[1]
-    const  = args[2]
-    name   = 'scripts/json.zlib'
-    tables = generate.loads(name)
-
-    if const in tables.fests:
-        func = compare_years
-    elif const.isdigit():
-        func = compare_fests
-
-    output = func(
-        genre, const, tables
-    )
-
-    data = table(
-        (f'{genre.title()} '
-         f'Music ({const})'),
-        output
-    )
-
-    print(data)
