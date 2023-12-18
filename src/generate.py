@@ -1,7 +1,9 @@
 import src.classes as classes
+import src.collect as collect
+import argparse
 import zlib
 import json
-import bs4
+import os
 
 def loads(name):
     data = ''
@@ -24,44 +26,46 @@ def dumps(tables, name):
         file.write(comp)
 
 
-def parse(html):
-    css = {
-        'old': 'yKMVIe',
-        'new': 'PZPZlf',
-        'loc': 'LrzXr kno-fv wHYlTd z8gr9e',
-        'set': 'nxucXc CxwsZe'
+def wrap(
+        params, func,
+        dump=False, search=False,
+        json='scripts/json.zlib'):
+    tables = loads(json)
+
+    args   = {
+        'params': params,
+        'tables': tables
     }
 
-    soup  = bs4.BeautifulSoup(html, 'html.parser')
-    names = soup.find_all('span', class_=css['set'])
-    info  = soup.find_all('span', class_=css['loc'])
+    if search:
+        args['search'] = \
+            collect.init(
+                os.environ['PYLAST_API_KEY'],
+                os.environ['PYLAST_API_SECRET'],
+                tables
+            )
 
-    old   = soup.find('span', class_=css['old'])
-    new   = soup.find('div',  class_=css['new'])
+    func(**args)
 
-    title = (old or new).string.split()
-    dates = place = ''
+    if dump:
+        dumps(tables, json)
 
-    if info[0].a:
-        if len(info) > 1:
-            dates = info[1].string
 
-        place = info[0].a.string
+def parse(rest, lines):
+    parser = argparse.ArgumentParser()
+    file   = argparse.FileType(encoding='utf-8')
+    parser.add_argument('data', type=file)
+
+    args = parser.parse_args(rest)
+    data = args.data
+
+    if lines:
+        output = [
+            r.strip() for r in
+            data.readlines()
+        ]
     else:
-        if len(info) > 1:
-            place = info[1].a.string
+        output = data.read()
 
-        dates = info[0].string
-
-    fest  = next(filter(str.isalpha, title))
-    year  = next(filter(str.isdigit, title))
-    dates = dates.split(' - ')
-
-    wrap  = {
-        'fest' : fest,
-        'year' : int(year),
-        'place': (fest, 'place', place),
-        'dates': (fest, 'dates', dates)
-    }
-
-    return wrap, [s.string for s in names]
+    data.close()
+    return output
