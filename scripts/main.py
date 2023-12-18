@@ -112,8 +112,8 @@ if __name__ == '__main__':
     parser.add_argument('rest', nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
-    search = args.func in choice[:-1]
-    dump   = args.func in choice[:-1] \
+    search = args.func in choice[:2]
+    dump   = args.func in choice[:2] \
           or args.func == 'edit'
 
     generate.wrap(
