@@ -33,7 +33,7 @@ if __name__ == '__main__':
         back = f'{args.backup}/backup_{num}.zlib'
 
         ext  = os.path.splitext(file)[1]
-        path = [f'{folder}/{file}']
+        path = f'{folder}/{file}'
 
         if ext == '.html':
             func = main.html
@@ -43,7 +43,7 @@ if __name__ == '__main__':
             continue
 
         header('Current file: {}', file)
-        generate.wrap(path, func, True, True)
+        generate.wrap([path], func, True, True)
 
         header('Creating backup_{}.zlib', num)
         shutil.copy(args.json, back)
