@@ -10,7 +10,7 @@ def compare(loop, args, order):
             fest, year = args(arg, val)
             year = int(year)
 
-            res = percent(
+            res = tally(
                 lambda s: s['fest'] == fest \
                       and s['year'] == year,
                 tables,
@@ -41,7 +41,7 @@ compare_years \
     )
 
 
-def percent(pred, tables, limit=None):
+def tally(pred, tables, limit=None):
     genres = {}
 
     for s in tables.sets:
@@ -106,20 +106,13 @@ def overlap(
     ]
 
 
-def table(title, data):
+def table(*columns):
     def change(pos, char, junc=True):
         infix = '_junction' * junc
         attr  = f'{pos}{infix}_char'
         setattr(tab, attr, char)
 
-    tab = pt.PrettyTable(
-        ['genre', 'prcnt']
-    )
-
-    data = [
-        (k, f'{round(v, 1)}%')
-        for k,v in data
-    ]
+    tab = pt.PrettyTable(columns)
 
     change('bottom_right', '╯')
     change('bottom_left',  '╰')
@@ -132,11 +125,26 @@ def table(title, data):
     change('horizontal',   '─', False)
     change('vertical',     '│', False)
 
-    tab.align['genre'] = 'l'
-    tab.align['prcnt'] = 'r'
-    tab.padding_width  = 2
+    tab.padding_width = 2
     tab.header = False
-    tab.title  = title
-    tab.add_rows(data)
+
+    return tab
+
+
+def percent(title, data):
+    tab = table(
+        'genre',
+        'value'
+    )
+
+    fmt = [
+        (k, f'{round(v, 1)}%')
+        for k,v in data
+    ]
+
+    tab.align['genre'] = 'l'
+    tab.align['value'] = 'r'
+    tab.add_rows(fmt)
+    tab.title = title
 
     return tab

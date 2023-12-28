@@ -56,7 +56,7 @@ def compare(params, tables):
         args.genre, const, tables
     )
 
-    data = calculate.table(
+    data = calculate.percent(
         (f'{args.genre.title()} '
          f'Music ({const})'),
         output
@@ -78,7 +78,7 @@ def overlap(params, tables):
         args.year, tables
     )
 
-    data = calculate.table(
+    data = calculate.percent(
         f'Overlap with {args.main}',
         [t[:2] for t in output]
     )
@@ -103,9 +103,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     choice = (
-        'html',  'text',
-        'query', 'overlap'
-        'edit',  'compare'
+        'html' , 'text'   ,
+        'query', 'overlap',
+        'edit' , 'compare'
     )
 
     parser.add_argument('func', choices=choice)
