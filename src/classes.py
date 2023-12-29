@@ -1,3 +1,5 @@
+import collections
+
 class Database(tuple):
     def __new__(cls, tables):
         return super(Database, cls) \
@@ -6,9 +8,16 @@ class Database(tuple):
     def __init__(self, tables):
         fests, artists, sets = tables
         self.tables  = tables
-        self.fests   = fests
-        self.artists = artists
-        self.sets    = sets
+        self.fests   = {k:Fest  (v) for k,v in fests  .items()}
+        self.artists = {k:Artist(v) for k,v in artists.items()}
+        self.sets    = [Set(s) for s in sets]
+
+    def dumps(self):
+        f = {k:v.data for k,v in self.fests  .items()}
+        a = {k:v.data for k,v in self.artists.items()}
+        s = [s.data for s in self.sets]
+
+        return f, a, s
 
     @staticmethod
     def get(table, val):
@@ -45,8 +54,8 @@ class Database(tuple):
             table, args[:-2]
         )
 
-        key, val   = args[-2:]
-        table[key] = val
+        key, val = args[-2:]
+        out[key] = val
 
     def add_fest(self, val):
         fests = self.fests
@@ -58,3 +67,74 @@ class Database(tuple):
 
     def add_set(self, **vals):
         self.sets.append(vals)
+
+
+def assign(**kwargs):
+    def inner(key, val):
+        for n, t in kwargs.items():
+            test = check(n, t)
+
+            if test(key, val):
+                return True
+
+        return False
+
+    return inner
+
+
+def check(name, test):
+    def inner(key, val):
+        vb = isinstance(val, test)
+        kb = key == name
+
+        return kb and vb
+
+    return inner
+
+
+class Fest(collections.UserDict):
+    def __init__(self, data):
+        self.test = assign(
+            dates=dict,
+            place=str
+        )
+
+        super().__init__(data)
+
+
+    def __setitem__(self, key, val):
+        if self.test(key, val):
+            super().__setitem__(key, val)
+
+
+class Artist(collections.UserDict):
+    def __init__(self, data):
+        self.test = assign(
+            woman=(bool, type(None)),
+            genres=list,
+            main=str
+        )
+
+        super().__init__(data)
+
+
+    def __setitem__(self, key, val):
+        if self.test(key, val):
+            super().__setitem__(key, val)
+
+
+class Set(collections.UserDict):
+    def __init__(self, data):
+        self.test = assign(
+            artist=str,
+            bill=str,
+            fest=str,
+            year=int
+        )
+
+        super().__init__(data)
+
+
+    def __setitem__(self, key, val):
+        if self.test(key, val):
+            super().__setitem__(key, val)

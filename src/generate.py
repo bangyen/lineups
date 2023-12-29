@@ -18,7 +18,7 @@ def loads(name):
 
 def dumps(tables, name):
     with open(name, 'wb') as file:
-        data = tables.tables
+        data = tables.dumps()
         strs = json.dumps(data)
         byte = strs.encode()
 
