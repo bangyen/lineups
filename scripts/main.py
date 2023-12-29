@@ -19,14 +19,8 @@ def html(params, tables, search):
 
 
 def text(params, tables, search):
-    html  = generate.parse(params, True)
-    start = html.index('')
-
-    head  = html[:start]
-    wrap  = parse.text(head)
-
-    body  = html[start + 1:]
-    names = [r for r in body if r]
+    data = generate.parse(params, True)
+    wrap, names = parse.text(data)
 
     collect.append(
         wrap,

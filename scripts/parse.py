@@ -1,5 +1,5 @@
 import bs4
-import os
+import re
 
 def split(row):
     pair = row.split(maxsplit=1)
@@ -9,10 +9,15 @@ def split(row):
     return key, val
 
 
-def text(rows):
+def text(data):
+    start = data.index('')
+    head  = data[:start]
+    body  = data[start + 1:]
+    names = [r for r in body if r]
+
     pairs = {
         k:v for k,v in
-        map(split, rows)
+        map(split, head)
     }
 
     f, p, y, d =         \
@@ -22,20 +27,22 @@ def text(rows):
     fest  = pairs[f]
     year  = pairs[y]
     place = pairs[p]
-    dates = pairs[d]
+    dates = re.sub(
+        r', \d{4}',
+        '', pairs[d]
+    )
 
-    year  = int(year)
-    dates = dates.split(' – ')
-
-    return {
-        f:  fest,
-        y:  year,
-        p: (fest, p, place),
-        d: (fest, d, dates)
+    wrap  = {
+        f: fest,
+        y: int(year),
+        p: (fest, p,       place),
+        d: (fest, d, year, dates)
     }
 
+    return wrap, names
 
-def html(html):
+
+def html(data):
     css = {
         'old': 'yKMVIe',
         'new': 'PZPZlf',
@@ -43,7 +50,7 @@ def html(html):
         'set': 'nxucXc CxwsZe'
     }
 
-    soup  = bs4.BeautifulSoup(html, 'html.parser')
+    soup  = bs4.BeautifulSoup(data, 'html.parser')
     names = soup.find_all('span', class_=css['set'])
     info  = soup.find_all('span', class_=css['loc'])
 
@@ -66,13 +73,16 @@ def html(html):
 
     fest  = next(filter(str.isalpha, title))
     year  = next(filter(str.isdigit, title))
-    dates = dates.split(' - ')
+    dates = re.sub(
+        r', \d{4}',
+        '', dates
+    )
 
     wrap  = {
         'fest' : fest,
         'year' : int(year),
-        'place': (fest, 'place', place),
-        'dates': (fest, 'dates', dates)
+        'place': (fest, 'place',       place),
+        'dates': (fest, 'dates', year, dates)
     }
 
     return wrap, [s.string for s in names]
