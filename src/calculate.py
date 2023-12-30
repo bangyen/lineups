@@ -114,6 +114,7 @@ def table(*columns):
 
     tab = pt.PrettyTable(columns)
 
+    tab.junction_char = '┼'
     change('bottom_right', '╯')
     change('bottom_left',  '╰')
     change('top_right',    '╮')
