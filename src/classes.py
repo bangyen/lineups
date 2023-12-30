@@ -92,7 +92,28 @@ def check(name, test):
     return inner
 
 
+def pretty(self, key=None):
+    def convert(head):
+        if head == 'key':
+            return key
+
+        val = self[head]
+
+        if isinstance(val, list):
+            return ', '.join(val)
+
+        return val
+
+    return [
+        convert(h) for h in
+        type(self).headers
+    ]
+
+
 class Fest(collections.UserDict):
+    headers = ['key', 'place']
+    pretty  = pretty
+
     def __init__(self, data):
         self.test = assign(
             dates=dict,
@@ -108,12 +129,18 @@ class Fest(collections.UserDict):
 
 
 class Artist(collections.UserDict):
+    headers = ['key', 'main', 'genres', 'woman']
+    pretty  = pretty
+
     def __init__(self, data):
         self.test = assign(
             woman=(bool, type(None)),
             genres=list,
             main=str
         )
+
+        if 'main' not in data:
+            data['main'] = ''
 
         super().__init__(data)
 
@@ -124,6 +151,9 @@ class Artist(collections.UserDict):
 
 
 class Set(collections.UserDict):
+    headers = ['artist', 'bill', 'fest', 'year']
+    pretty  = pretty
+
     def __init__(self, data):
         self.test = assign(
             artist=str,
