@@ -1,3 +1,5 @@
+import src.calculate as calculate
+import src.classes   as classes
 import re
 
 def match(lst):
@@ -58,22 +60,14 @@ def conv(val):
 
 
 def output(pair):
-    table, sub = pair
-    fmt = isinstance(table, dict)
+    cls, sub = pair
+    head = cls.headers
+    data = [v.pretty(k) for k,v in sub]
+    tab  = calculate.table(*head)
 
-    for n in sub:
-        print(n if fmt else '')
-
-        if fmt:
-            dct = table[n]
-        else:
-            dct = n
-
-        for key in dct:
-            tab = '\t' * fmt
-            val = dct[key]
-
-            print(f'{tab}{key}: {val}')
+    tab.add_rows(data)
+    tab.header = True
+    print(tab)
 
 
 def test(inp, tables):
@@ -89,13 +83,24 @@ def test(inp, tables):
 
         return ast
 
+    def pair(tab, key):
+        if isinstance(tab, dict):
+            return key, tab[key]
+
+        return None, key
+
     if inp is None:
         return
 
     tab = getattr(tables, inp[0])
+    cls = {
+        'fests'  : classes.Fest,
+        'artists': classes.Artist,
+        'sets'   : classes.Set
+    }
 
-    return tab, [
-        k for k in tab
+    return cls[inp[0]], [
+        pair(tab, k) for k in tab
         if branch(inp[1], k)
     ]
 
