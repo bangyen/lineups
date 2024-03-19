@@ -1,5 +1,8 @@
+import collections
+import nltk
 import bs4
 import re
+import os
 
 def split(row):
     pair = row.split(maxsplit=1)
@@ -42,47 +45,78 @@ def text(data):
     return wrap, names
 
 
+def count(lst):
+    nums = collections.Counter(lst)
+    top  = nums.most_common(1)
+
+    return top[0][0]
+
+
+def trim(lst):
+    rev = [s[::-1] for s in lst]
+    pre = len(os.path.commonprefix(lst))
+    pst = len(os.path.commonprefix(rev))
+
+    return [
+        s[pre:len(s) - pst]
+        for s in lst
+    ]
+
+
 def html(data):
-    css = {
-        'old': 'yKMVIe',
-        'new': 'PZPZlf',
-        'loc': 'LrzXr kno-fv wHYlTd z8gr9e',
-        'set': 'nxucXc CxwsZe'
-    }
-
-    soup  = bs4.BeautifulSoup(data, 'html.parser')
-    names = soup.find_all('span', class_=css['set'])
-    info  = soup.find_all('span', class_=css['loc'])
-
-    old   = soup.find('span', class_=css['old'])
-    new   = soup.find('div',  class_=css['new'])
-
-    title = (old or new).string.split()
-    dates = place = ''
-
-    if info[0].a:
-        if len(info) > 1:
-            dates = info[1].string
-
-        place = info[0].a.string
-    else:
-        if len(info) > 1:
-            place = info[1].a.string
-
-        dates = info[0].string
-
-    fest  = next(filter(str.isalpha, title))
-    year  = next(filter(str.isdigit, title))
-    dates = re.sub(
-        r', \d{4}',
-        '', dates
+    soup = bs4.BeautifulSoup(
+        data, 'html.parser'
     )
 
-    wrap  = {
-        'fest' : fest,
-        'year' : int(year),
-        'place': (fest, 'place',       place),
-        'dates': (fest, 'dates', year, dates)
+    tags = []
+    noun = []
+    nums = []
+
+    for child in soup.descendants:
+        if hasattr(child, 'children'):
+            continue
+
+        parent = child.parent
+
+        if parent.has_attr('class'):
+            css = ' '.join(parent['class'])
+            tags.append((parent.name, css))
+
+
+        if not isinstance(child, bs4.NavigableString):
+            continue
+
+        if not re.match('[\w\s]+$', child):
+            continue
+
+        lex = child.lower().split()
+        tag = nltk.pos_tag(lex)
+
+        let = [
+            x for x,y in tag
+            if x != 'lineup'
+            and 'NN' in y
+        ]
+
+        num = [
+            x for x,y in tag
+            if re.match('\d{4}$', x)
+        ]
+
+        noun.extend(let)
+        nums.extend(num)
+
+    tag, css = count(tags)
+    name = soup.find_all(tag, class_=css)
+
+    sets = [
+        str(s.string or s.img['alt'])
+        for s in name
+    ]
+
+    wrap = {
+        'fest' :     count(noun),
+        'year' : int(count(nums))
     }
 
-    return wrap, [s.string for s in names]
+    return wrap, trim(sets)
