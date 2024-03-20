@@ -54,6 +54,7 @@ if __name__ == '__main__':
             link = (
                 'https://www.last.fm/user/'
                 f'{user}/library/music/{name}'
+                '?date_preset=LAST_365_DAYS'
             )
 
             html = soup(link)
