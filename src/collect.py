@@ -138,9 +138,6 @@ def append(wrap, names, search, tables):
     fest = wrap['fest']
     year = wrap['year']
 
-    tables.add_fest(wrap['place'])
-    tables.add_fest(wrap['dates'])
-
     for n in names:
         c, g = search(n)
         tables.add_artist((c, g))
