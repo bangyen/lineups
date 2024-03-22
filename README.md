@@ -1,4 +1,33 @@
 # Lineup Database
+External Libraries:
+- `pylast`: Used for interacting with the Last.fm API
+- `difflib`: Used for fuzzy string matching
+
+Configuration:
+- The script requires an API key and secret for Last.fm access (`init(key, secret, tables)`)
+
+## Documentation
+### Source Files
+#### `collect.py`
+Key functionalities:
+- Artist Lookup:
+  - `lookup(name)`: Attempts to find artist information using an internal cache and Last.fm API calls.
+  - `backup(name)`: If artist information isn't found in the cache, performs a broader search using Last.fm.
+  - `search(name)`: Calls `lookup` first, then falls back to `backup` if necessary.
+- Data Processing:
+  - `strdiff(name, match)`: Calculates similarity between two artist names using fuzzy matching.
+  - `memoize(func)`: Caches function results to improve performance for frequently used lookups.
+  - Extracts artist genre, bio summary, and gender from Last.fm data.
+- Database Interaction:
+  - `append(wrap, names, search, tables)`: Takes a list of artist names, searches for information using `search`, and adds them to the database (`tables`) along with associated festival and year information.
+
+Output:
+  - The `append` function might print warnings for artists where genre information couldn't be found.
+
+Notes:
+  - The script prioritizes cached data and limits the number of Last.fm API calls to avoid overwhelming the service.
+
+
 ## Tutorial
 - Client ID/Secret
   - Go to `https://www.last.fm/api/account/create`
