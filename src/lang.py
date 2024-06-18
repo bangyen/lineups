@@ -3,6 +3,11 @@ import src.classes   as classes
 import re
 
 def match(lst):
+    """
+    Finds the index of the closing parenthesis
+    that matches the opening parenthesis at the
+    beginning of the list.
+    """
     def count(inp, acc):
         if not acc:
             return len(inp)
@@ -19,6 +24,11 @@ def match(lst):
 
 
 def split(regex, inp):
+    """
+    Returns the two parts of the input string:
+    the part that matches the regular expression,
+    and the part that follows it.
+    """
     alt = fr'({regex})(.*)'
     mat = re.match(alt, inp)
 
@@ -29,6 +39,11 @@ def split(regex, inp):
 
 
 def conv(val):
+    """
+    Converts a string into a Python object or
+    function, supporting various data types
+    and operations.
+    """
     def get(tab, key):
         if isinstance(key, str):
             return tab[key][val]
@@ -60,6 +75,11 @@ def conv(val):
 
 
 def output(pair):
+    """
+    Prints data represented as a list of tuples.
+    It extracts headers from the table and formats
+    the data.
+    """
     cls, sub = pair
     head = cls.headers
     data = [v.pretty(k) for k,v in sub]
@@ -71,6 +91,11 @@ def output(pair):
 
 
 def test(inp, tables):
+    """
+    Filters a table based on a condition. It
+    returns a tuple containing the table and
+    a list of tuples that meet the condition.
+    """
     def branch(ast, key):
         if isinstance(ast, tuple):
             op, x, y = ast
@@ -106,6 +131,11 @@ def test(inp, tables):
 
 
 def parse(lst):
+    """
+    Parses a list of tokens into a syntax tree.
+    It recursively builds the tree, handling
+    different token types.
+    """
     def branch(inp):
         tok = inp[0]
 
@@ -143,6 +173,11 @@ def parse(lst):
 
 
 def lex(inp):
+    """
+    Tokenizes a string into a list of tokens. It
+    uses regular expressions to match different
+    token types.
+    """
     def add(reg, val):
         res = split(reg, val)
 

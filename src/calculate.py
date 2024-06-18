@@ -3,6 +3,13 @@ import prettytable  as pt
 import sys
 
 def compare(loop, args, order):
+    """
+    Generates a comparison function for festival
+    data. It takes a loop function to iterate over
+    the data, an args function to extract relevant
+    information, and an order function to sort the
+    results.
+    """
     def inner(gen, arg, tables, **kwargs):
         out = []
 
@@ -42,6 +49,12 @@ compare_years \
 
 
 def tally(pred, tables, limit=None):
+    """
+    Tallies artist occurrences in a table, filtered
+    by a predicate. It returns a dictionary with
+    artists and their percentages, limited to a
+    specified number, with the rest grouped as "Other".
+    """
     genres = {}
 
     for s in tables.sets:
@@ -79,6 +92,12 @@ def overlap(
         main, fests,
         year, tables,
         diff=True):
+    """
+    Calculates the overlap between a main festival
+    and a list of other festivals, returning a list
+    of tuples containing the festival name, overlap
+    percentage, and overlapping artists.
+    """
     def num(one, two):
         a = get(one)
         b = get(two)
@@ -107,6 +126,12 @@ def overlap(
 
 
 def table(*columns):
+    """
+    Creates a PrettyTable object with custom
+    settings. It takes column names as inputs
+    and customizes the appearance of the table's
+    borders and padding. 
+    """
     def change(pos, char, junc=True):
         infix = '_junction' * junc
         attr  = f'{pos}{infix}_char'
@@ -133,6 +158,11 @@ def table(*columns):
 
 
 def percent(title, data):
+    """
+    Takes a title and data as inputs, rounds the
+    values to one decimal place, and formats them
+    as percentages.
+    """
     tab = table(
         'genre',
         'value'

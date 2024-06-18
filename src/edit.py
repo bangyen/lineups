@@ -3,6 +3,13 @@ import src.collect  as collect
 import os
 
 def interact(tables):
+    """
+    Prompts the user to input set information,
+    validates the input, and stores the information
+    in a list of tuples. If the user inputs '!redo',
+    it restarts the input process. Finally, it calls
+    the billing function with the collected information.
+    """
     fest = artist = True
     year = bill   = ''
     res  = []
@@ -39,6 +46,13 @@ def interact(tables):
 
 
 def billing(lines, tables):
+    """
+    Takes a list of tuples containing set information and
+    updates the database with the corresponding billing
+    information. If an artist is not found in the database,
+    it uses a similar name. If an invalid billing status
+    is provided, it exits the program.
+    """
     opts  = ('Headliner', 'Subheadliner')
     names = []
 

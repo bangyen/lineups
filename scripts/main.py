@@ -6,31 +6,37 @@ import src.lang      as lang
 import src.lang      as edit
 import argparse
 
-def html(params, tables, search):
-    data = generate.parse(params, False)
-    wrap, names = parse.html(data)
+def factory(split):
+    """
+    Generates a customized inner function
+    that parses command-line arguments,
+    applies a specified split function,
+    and appends results to the database.
+    """
+    def inner(params, tables, search):
+        data = generate.parse(params)
+        wrap, names = split(data)
 
-    collect.append(
-        wrap,
-        names,
-        search,
-        tables
-    )
+        collect.append(
+            wrap,
+            names,
+            search,
+            tables
+        )
+
+    return inner
 
 
-def text(params, tables, search):
-    data = generate.parse(params, True)
-    wrap, names = parse.text(data)
-
-    collect.append(
-        wrap,
-        names,
-        search,
-        tables
-    )
+html = factory(parse.html)
+text = factory(parse.text)
 
 
 def compare(params, tables):
+    """
+    Parses arguments to compare music data
+    by genre and festival/year, calculating
+    percentage values as output.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('genre')
 
@@ -42,24 +48,30 @@ def compare(params, tables):
     const = args.fest or args.year
 
     if args.fest:
-        func = 'compare_years'
+        name = 'compare_years'
     else:
-        func = 'compare_fests'
+        name = 'compare_fests'
 
-    output = getattr(calculate, func)(
-        args.genre, const, tables
-    )
+    func = getattr(calculate, name)
+    outp = func(args.genre, const, tables)
 
     data = calculate.percent(
         (f'{args.genre.title()} '
          f'Music ({const})'),
-        output
+        outp
     )
 
     print(data)
 
 
 def overlap(params, tables):
+    """
+    Parses arguments to find overlapping
+    artists between a main festival and
+    one or more additional festivals for
+    a specified year, calculating percentage
+    values as output.
+    """
     keys   = tables.fests.keys()
     parser = argparse.ArgumentParser()
     parser.add_argument('main', choices=keys)
@@ -94,21 +106,19 @@ def edit(params, tables):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-
     choice = (
         'html' , 'text'   ,
         'query', 'overlap',
         'edit' , 'compare'
     )
 
+    parser = argparse.ArgumentParser()
     parser.add_argument('func', choices=choice)
     parser.add_argument('rest', nargs=argparse.REMAINDER)
-    args = parser.parse_args()
+    args   = parser.parse_args()
 
     search = args.func in choice[:2]
-    dump   = args.func in choice[:2] \
-          or args.func == 'edit'
+    dump   = args.func == 'edit' or search
 
     generate.wrap(
         args.rest,

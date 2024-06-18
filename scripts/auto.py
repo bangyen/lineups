@@ -10,6 +10,10 @@ def header(fmt, val):
 
 
 def default(parser, name, value):
+    """
+    Adds a default argument to the given
+    parser with short and long options.
+    """
     parser.add_argument(
         f'-{name[0]}',
         f'--{name}'  ,
@@ -20,18 +24,21 @@ def default(parser, name, value):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    default(parser, 'json',   'scripts/json.zlib')
-    default(parser, 'input',  'data')
-    default(parser, 'output', 'data/done')
-    default(parser, 'backup', 'backup')
+    # Add default arguments
+    default(parser, 'json'  , 'scripts/json.zlib')
+    default(parser, 'input' , 'data'             )
+    default(parser, 'output', 'data/done'        )
+    default(parser, 'backup', 'backup'           )
 
     args   = parser.parse_args()
     folder = args.input
 
+    # Iterate over files in the input folder
     for file in os.listdir(folder):
         num  = len(os.listdir(args.backup))
         back = f'{args.backup}/backup_{num}.zlib'
 
+        # Get the file extension and path
         ext  = os.path.splitext(file)[1]
         path = f'{folder}/{file}'
 
@@ -42,9 +49,11 @@ if __name__ == '__main__':
         else:
             continue
 
+        # Parse the file and add to the database
         header('Current file: {}', file)
         generate.wrap([path], func, True, True)
 
+        # Create a backup and archive the processed file
         header('Creating backup_{}.zlib', num)
         shutil.copy(args.json, back)
         shutil.move(path, args.output)

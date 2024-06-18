@@ -10,6 +10,13 @@ SEARCH_MIN = 0.9
 DELAY = 1
 
 def strdiff(name, match):
+    """
+    Takes two string arguments, name and match, and
+    returns a ratio indicating their similarity. The
+    ratio is a float between 0 and 1, where 1 means
+    the strings are identical and 0 means they are
+    completely different.
+    """
     return difflib.SequenceMatcher(
         None,
         name.lower(),
@@ -18,6 +25,11 @@ def strdiff(name, match):
 
 
 def handler(func, val, **kwargs):
+    """
+    Waits for DELAY seconds, then calls func with
+    kwargs. Returns func's result if successful,
+    or val if an error occurs.
+    """
     try:
         time.sleep(DELAY)
         return func(**kwargs)
@@ -26,6 +38,12 @@ def handler(func, val, **kwargs):
 
 
 def memoize():
+    """
+    Returns a function that takes a list of tags and
+    outputs the tag with the highest total count. The
+    tag getInfo request is memoized to avoid repeated
+    requests.
+    """
     cache = {}
 
     def total(tag):
@@ -56,6 +74,15 @@ def memoize():
 
 
 def init(key, secret, tables):
+    """
+    Sets up a LastFM API connection, memoizes the tag
+    getInfo request, and creates a search function that
+    queries the LastFM database for artist info.
+
+    The search function searches the cache and LastFM,
+    handling name variations through normalization.
+    """
+    # Initialize LastFM API connection
     network = pylast.LastFMNetwork(
         api_key=key,
         api_secret=secret
@@ -65,18 +92,21 @@ def init(key, secret, tables):
     best  = memoize()
 
     def lookup(name):
+        # Check cache for match
         for key in cache:
             diff = strdiff(name, key)
 
             if diff > CACHED_MIN or name == key:
                 return key, cache[key]
 
+        # Search LastFM for artist
         res  = network.get_artist(name)
         corr = handler(res.get_correction, name)
 
         if corr in cache:
             return corr, cache[corr]
 
+        # Extract artist info from LastFM response
         summ   = handler(res.get_bio_summary, '')
         items  = handler(res.get_top_tags, [], limit=15)
         tags   = [t.item for t in items]
@@ -96,6 +126,7 @@ def init(key, secret, tables):
         mat = re.match(r'[^\n]+\n\n1', summ)
         alt = genres[:1] if mat else genres
 
+        # Return artist info
         return corr, {
             'main'  : (t := best(alt)) and t.name,
             'genres': [t.name for t in genres],
@@ -106,6 +137,7 @@ def init(key, secret, tables):
         regex = re.compile(r'("[^"]+"|\([^()]+\))')
         paren = regex.sub('', name)
 
+        # Search LastFM for similar artists
         results =                            \
             network.search_for_artist(paren) \
                    .get_next_page()
@@ -117,6 +149,7 @@ def init(key, secret, tables):
             if strdiff(paren, artist) > SEARCH_MIN:
                 return lookup(match)
 
+        # Return empty result if no match found
         return name, {
             'main'  : None,
             'genres': [],
@@ -135,6 +168,11 @@ def init(key, secret, tables):
 
 
 def append(wrap, names, search, tables):
+    """
+    Searches for each artist in the names list, adds
+    them to the database, and creates a lineup entry
+    if not already present.
+    """
     fest = wrap['fest']
     year = wrap['year']
 
