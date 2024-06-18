@@ -9,8 +9,8 @@ def match(lst):
     beginning of the list.
     """
     def count(inp, acc):
-        if not acc:
-            return len(inp)
+        if not acc: return len(inp)
+        if not inp: return -1
 
         if (tok := inp[0]) == '(':
             acc += 1
@@ -29,8 +29,11 @@ def split(regex, inp):
     the part that matches the regular expression,
     and the part that follows it.
     """
-    alt = fr'({regex})(.*)'
+    alt = fr'({regex}) *(.*)'
     mat = re.match(alt, inp)
+
+    if not mat:
+        return
 
     one = mat.group(1)
     two = mat.group(2)
@@ -182,7 +185,8 @@ def lex(inp):
         res = split(reg, val)
 
         if not res:
-            return ''
+            out.clear()
+            return
 
         a, b = res
         out.append(a)
@@ -199,7 +203,7 @@ def lex(inp):
         )
 
         grp = '|'.join(regex)
-        inp = add(grp, inp).strip()
+        inp = add(grp, inp)
 
     return out
 
