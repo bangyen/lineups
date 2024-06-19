@@ -36,7 +36,7 @@ def split(regex, inp):
         return
 
     one = mat.group(1)
-    two = mat.group(2)
+    two = mat.group(3)
 
     return one, two
 
