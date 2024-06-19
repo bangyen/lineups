@@ -29,7 +29,7 @@ def split(regex, inp):
     the part that matches the regular expression,
     and the part that follows it.
     """
-    alt = fr'({regex}) *(.*)'
+    alt = fr' *({regex})( +(.*)|$)'
     mat = re.match(alt, inp)
 
     if not mat:
