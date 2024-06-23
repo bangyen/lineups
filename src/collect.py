@@ -1,8 +1,6 @@
-import src.generate as generate
-import time
-
 import difflib
 import pylast
+import time
 import re
 
 CACHED_MIN = 0.9
@@ -167,7 +165,7 @@ def init(key, secret, tables):
     return search
 
 
-def append(wrap, names, search, tables):
+def append(lineup, search, tables):
     """
     Searches for each artist in the names list, adds
     them to the database, and creates a lineup entry
@@ -176,14 +174,14 @@ def append(wrap, names, search, tables):
     fest = wrap['fest']
     year = wrap['year']
 
-    for n in names:
+    for n in lineup.names:
         c, g = search(n)
         tables.add_artist((c, g))
 
         args = {
             'artist': c,
-            'fest'  : fest,
-            'year'  : year
+            'fest'  : lineup.year,
+            'year'  : lineup.year
         }
 
         if tables.get_set(**args):

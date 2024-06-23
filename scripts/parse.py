@@ -4,6 +4,34 @@ import bs4
 import re
 import os
 
+class Lineup:
+    def __init__(self, names, fest, year):
+        self.names = Lineup.clean(names)
+        self.year  = int(year)
+        self.fest  = fest
+
+    @staticmethod
+    def clean(names):
+        diff = Lineup.trim(names)
+
+        return [
+            (new := n.strip())
+            for n in diff if new
+        ]
+
+    @staticmethod
+    def trim(lst):
+        # Trims common prefixes and suffixes
+        rev = [s[::-1] for s in lst]
+        pre = len(os.path.commonprefix(lst))
+        pst = len(os.path.commonprefix(rev))
+
+        return [
+            s[pre:len(s) - pst]
+            for s in lst
+        ]
+
+
 def split(row):
     pair = row.split(maxsplit=1)
     key  = pair[0][:-1].lower()
@@ -16,9 +44,9 @@ def text(file):
     """
     Processes a file into a structured format,
     extracting key information from the header
-    (fest, year, place, dates) and returning a
-    dictionary containing these values alongside
-    a list of names from the body.
+    (fest and year) and returning a dictionary
+    containing these values alongside a list of
+    names from the body.
     """
     data  = re.split('\n', file)
     start = data.index('')
@@ -26,34 +54,17 @@ def text(file):
     # Split the data into header and body
     head  = data[:start]
     body  = data[start + 1:]
-    names = [r for r in body if r]
 
     pairs = {
         k:v for k,v in
         map(split, head)
     }
 
-    f, p, y, d =         \
-        'fest', 'place', \
-        'year', 'dates'
-
     # Extract values
-    fest  = pairs[f]
-    year  = pairs[y]
-    place = pairs[p]
-    dates = re.sub(
-        r', \d{4}',
-        '', pairs[d]
-    )
+    fest  = pairs['fest']
+    year  = pairs['year']
 
-    wrap  = {
-        f: fest,
-        y: int(year),
-        p: (fest, p,       place),
-        d: (fest, d, year, dates)
-    }
-
-    return wrap, names
+    return Lineup(body, fest, year)
 
 
 def count(lst):
@@ -65,18 +76,6 @@ def count(lst):
     top  = nums.most_common(1)
 
     return top[0][0]
-
-
-def trim(lst):
-    # Trims common prefixes and suffixes
-    rev = [s[::-1] for s in lst]
-    pre = len(os.path.commonprefix(lst))
-    pst = len(os.path.commonprefix(rev))
-
-    return [
-        s[pre:len(s) - pst]
-        for s in lst
-    ]
 
 
 def html(data):
@@ -134,15 +133,14 @@ def html(data):
     name = soup.find_all(tag, class_=css)
 
     # Extract artist names
+    # Use vars(s)
     sets = [
         str(s.string or s.img['alt'])
         for s in name
     ]
 
     # Use the most common noun and number
-    wrap = {
-        'fest' :     count(noun),
-        'year' : int(count(nums))
-    }
+    fest = count(noun)
+    year = count(nums)
 
-    return wrap, trim(sets)
+    return Lineup(sets, fest, year)

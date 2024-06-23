@@ -14,12 +14,11 @@ def factory(split):
     and appends results to the database.
     """
     def inner(params, tables, search):
-        data = generate.parse(params)
-        wrap, names = split(data)
+        data   = generate.parse(params)
+        lineup = split(data)
 
         collect.append(
-            wrap,
-            names,
+            lineup,
             search,
             tables
         )
