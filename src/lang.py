@@ -215,11 +215,10 @@ def run(inp, tables):
     data  = tree.filter(tables)
     name  = tree.table
 
-    table = format(data, name)
-    print(table)
+    return pretty(data, name)
 
 
-def format(data, name):
+def pretty(data, name):
     """
     Prints data represented as a list of tuples.
     It extracts headers from the table and formats

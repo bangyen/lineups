@@ -45,7 +45,6 @@ def wrap(
     it also initializes a LastFM API connection.
     """
     tables = loads(json)
-
     args   = {
         'params': params,
         'tables': tables
@@ -59,10 +58,12 @@ def wrap(
                 tables
             )
 
-    func(**args)
+    output = func(**args)
 
     if dump:
         dumps(tables, json)
+
+    return output
 
 
 def parse(rest):

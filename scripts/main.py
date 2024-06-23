@@ -55,13 +55,11 @@ def compare(params, tables):
     func = getattr(calculate, name)
     outp = func(args.genre, const, tables)
 
-    data = calculate.percent(
+    return calculate.percent(
         (f'{args.genre.title()} '
          f'Music ({const})'),
         outp
     )
-
-    print(data)
 
 
 def overlap(params, tables):
@@ -84,12 +82,10 @@ def overlap(params, tables):
         args.year, tables
     )
 
-    data = calculate.percent(
+    return calculate.percent(
         f'Overlap with {args.main}',
         [t[:2] for t in output]
     )
-
-    print(data)
 
 
 def query(params, tables):
@@ -97,7 +93,7 @@ def query(params, tables):
     parser.add_argument('cmd')
     args = parser.parse_args(params)
 
-    lang.run(args.cmd, tables)
+    return lang.run(args.cmd, tables)
 
 
 def edit(params, tables):
@@ -120,8 +116,11 @@ if __name__ == '__main__':
     search = args.func in choice[:2]
     dump   = args.func == 'edit' or search
 
-    generate.wrap(
+    output = generate.wrap(
         args.rest,
         eval(args.func),
         dump, search
     )
+
+    if output:
+        print(output)
