@@ -1,6 +1,242 @@
 import src.calculate as calculate
 import src.classes   as classes
+import operator
 import re
+
+class QueryError(SyntaxError):
+    pass
+
+
+class Syntax:
+    tables = ('fests', 'artists', 'sets')
+
+    def __init__(self, tokens):
+        def error(msg):
+            raise QueryError(msg)
+
+        if not tokens:
+            msg = 'Empty query'
+            error(msg)
+
+        if (table := tokens[0]) \
+                not in Syntax.tables:
+            msg = 'Invalid table'
+            error(msg)
+
+        if len(tokens) < 2:
+            msg = 'Missing keyword'
+            error(msg)
+
+        if tokens[1] != 'if':
+            msg = 'Invalid keyword'
+            error(msg)
+
+        self.table = table
+        self.tree  = Node(tokens[2:])
+
+    @staticmethod
+    def pair(table):
+        if isinstance(table, dict):
+            return lambda k: (k, table[k])
+
+        return lambda k: (None, k)
+
+    def filter(self, tables):
+        """
+        Filters a table based on a condition. It
+        returns a tuple containing the table and
+        a list of tuples that meet the condition.
+        """
+        name  = self.table
+        tree  = self.tree
+
+        table = getattr(tables, name)
+        pair  = Syntax.pair(table)
+        query = []
+
+        for key in table:
+            if not tree.test(table, key):
+                continue
+
+            val = pair(key)
+            query.append(val)
+
+        return query
+
+
+class Node:
+    eqls = ('==' , '!=', '=~')
+    kwrd = ('and', 'or')
+
+    def __init__(self, tokens):
+        exp = ' '.join(tokens)
+
+        if len(tokens) < 3:
+            fmt = 'Invalid expression: {}'
+            msg = fmt.format(exp)
+            raise QueryError(msg)
+
+        if len(tokens) == 3:
+            inv = Node.invalid
+            con = Node.convert
+            a, op, b = tokens
+
+            if op not in Node.eqls: inv(exp, op)
+            if Node.operator(a):    inv(exp, a)
+            if Node.operator(b):    inv(exp, b)
+
+            self.left  = con(a)
+            self.right = con(b)
+            self.op    = con(op)
+        else:
+            if tokens[0] == '(':
+                end = match(tokens)
+                sub = tokens[1:end - 1]
+            else:
+                end = 3
+                sub = tokens[0:3]
+
+            if tokens[end] not in Node.kwrd:
+                Node.invalid(exp, tokens[end])
+
+            self.left  = Node(sub)
+            self.right = Node(tokens[end + 1:])
+            self.op    = Node.convert(tokens[end])
+
+    @staticmethod
+    def operator(token):
+        funcs = (*Node.eqls, *Node.kwrd)
+
+        for op in funcs:
+            regex = op + '$'
+
+            if re.match(regex, token):
+                return True
+
+        return False
+
+    @staticmethod
+    def invalid(exp, tok):
+        fmt = 'Invalid token {} in expression {}'
+        msg = fmt.format(tok, exp)
+        raise QueryError(msg)
+
+    @staticmethod
+    def convert(val):
+        """
+        Converts a string into a Python object or
+        function, supporting various data types
+        and operations.
+        """
+        def get(tab, key):
+            if isinstance(key, str):
+                return tab[key][val]
+
+            return key[val]
+
+        def search(key, reg):
+            return re.search(reg, key)
+
+        expr = {
+            'key': lambda t, k: k,
+            'and': operator.and_,
+            'or' : operator.or_ ,
+            '==' : operator.eq  ,
+            '!=' : operator.ne  ,
+            '=~' : search,
+            'None' : None,
+            'True' : True,
+            'False': False
+        }
+
+        if val in expr  : return expr[val]
+        if val[0] == '"': return val[1:-1]
+        if val.isdigit(): return int(val)
+
+        return get
+
+    def test(self, table, key):
+        def inner(tree):
+            if isinstance(tree, Node):
+                left = tree.left
+                rght = tree.right
+                op   = tree.op
+
+                lval = inner(left)
+                rval = inner(rght)
+
+                return op(lval, rval)
+
+            if callable(tree):
+                return tree(table, key)
+
+            return tree
+
+        return inner(self)
+
+
+def lex(inp):
+    """
+    Tokenizes a string into a list of tokens. It
+    uses regular expressions to match different
+    token types.
+    """
+    def add(reg, val):
+        res = split(reg, val)
+
+        if not res:
+            out.clear()
+            return
+
+        a, b = res
+        out.append(a)
+        return b
+
+    out = []
+
+    while inp:
+        regex = (
+            r'\w+|\d+' ,
+            r'==|!=|=~',
+            r'"[^"]*"' ,
+            r'[()]'
+        )
+
+        grp = '|'.join(regex)
+        inp = add(grp, inp)
+
+    return out
+
+
+def run(inp, tables):
+    token = lex(inp)
+    tree  = Syntax(token)
+
+    data  = tree.filter(tables)
+    name  = tree.table
+
+    table = format(data, name)
+    print(table)
+
+
+def format(data, name):
+    """
+    Prints data represented as a list of tuples.
+    It extracts headers from the table and formats
+    the data.
+    """
+    single = name.capitalize()[:-1]
+    inner  = getattr(classes, single)
+    header = inner.headers
+
+    string = [v.pretty(k) for k,v in data]
+    table  = calculate.table(*header)
+
+    table.add_rows(string)
+    table.header = True
+
+    return table
+
 
 def match(lst):
     """
@@ -41,179 +277,3 @@ def split(regex, inp):
     return one, two
 
 
-def conv(val):
-    """
-    Converts a string into a Python object or
-    function, supporting various data types
-    and operations.
-    """
-    def get(tab, key):
-        if isinstance(key, str):
-            return tab[key][val]
-
-        return key[val]
-
-    def func(op):
-        s = f'lambda a, b: a {op} b'
-        return eval(s)
-
-    keyw = ('and', 'or', '==', '!=')
-    ltrl = ('True', 'False', 'None')
-
-    if val in keyw:
-        return func(val)
-    if val in ltrl:
-        return eval(val)
-    if val.isdigit():
-        return int(val)
-    if val[0] == '"':
-        return val[1:-1]
-    if val == 'key':
-        return lambda t, k: k
-    if val == '=~':
-        return lambda a, b: \
-               re.search(b, a)
-
-    return get
-
-
-def output(pair):
-    """
-    Prints data represented as a list of tuples.
-    It extracts headers from the table and formats
-    the data.
-    """
-    cls, sub = pair
-    head = cls.headers
-    data = [v.pretty(k) for k,v in sub]
-    tab  = calculate.table(*head)
-
-    tab.add_rows(data)
-    tab.header = True
-    print(tab)
-
-
-def test(inp, tables):
-    """
-    Filters a table based on a condition. It
-    returns a tuple containing the table and
-    a list of tuples that meet the condition.
-    """
-    def branch(ast, key):
-        if isinstance(ast, tuple):
-            op, x, y = ast
-            a = branch(x, key)
-            b = branch(y, key)
-            return op(a, b)
-
-        if callable(ast):
-            return ast(tab, key)
-
-        return ast
-
-    def pair(tab, key):
-        if isinstance(tab, dict):
-            return key, tab[key]
-
-        return None, key
-
-    if inp is None:
-        return
-
-    tab = getattr(tables, inp[0])
-    cls = {
-        'fests'  : classes.Fest,
-        'artists': classes.Artist,
-        'sets'   : classes.Set
-    }
-
-    return cls[inp[0]], [
-        pair(tab, k) for k in tab
-        if branch(inp[1], k)
-    ]
-
-
-def parse(lst):
-    """
-    Parses a list of tokens into a syntax tree.
-    It recursively builds the tree, handling
-    different token types.
-    """
-    def branch(inp):
-        tok = inp[0]
-
-        if tok == '(':
-            end = match(inp)
-            sub = inp[1:end - 1]
-            one = branch(sub)
-        else:
-            end = 3
-            op  = conv(inp[1])
-            a   = conv(inp[0])
-            b   = conv(inp[2])
-            one = (op, a, b)
-
-        if len(inp) == end:
-            return one
-
-        if inp[end] in keywrd:
-            func = conv(inp[end])
-            two  = branch(inp[end + 1:])
-            return func, one, two
-
-    if len(lst) < 2:
-        return
-
-    tables = ('fests', 'artists', 'sets')
-    keywrd = ('and',   'or')
-    tab, cond, *rest = lst
-
-    if cond != 'if':
-        return
-
-    if tab in tables:
-        return tab, branch(rest)
-
-
-def lex(inp):
-    """
-    Tokenizes a string into a list of tokens. It
-    uses regular expressions to match different
-    token types.
-    """
-    def add(reg, val):
-        res = split(reg, val)
-
-        if not res:
-            out.clear()
-            return
-
-        a, b = res
-        out.append(a)
-        return b
-
-    out = []
-
-    while inp:
-        regex = (
-            r'\w+|\d+' ,
-            r'==|!=|=~',
-            r'"[^"]*"' ,
-            r'[()]'
-        )
-
-        grp = '|'.join(regex)
-        inp = add(grp, inp)
-
-    return out
-
-
-def run(inp, tables):
-    tok = lex(inp)
-    ast = parse(tok)
-
-    if ast is None:
-        return
-
-    pair = test(ast, tables)
-    output(pair)
