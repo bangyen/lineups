@@ -168,10 +168,6 @@ class Table(collections.UserDict):
     """
     pretty = pretty
 
-    def __init__(self, data):
-        super().__init__(data)
-
-
     def __setitem__(self, key, val):
         if self.test(key, val):
             super().__setitem__(key, val)
