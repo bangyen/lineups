@@ -230,16 +230,16 @@ class ListTable(Table, collections.UserList):
 
         return sub
 
-    def get(self, **keys):
+    def get(self, keys):
         res = [
-            s for s in self.sets
+            s for s in self.data
             if s | keys == s
         ]
 
         return res
 
-    def set(self, key, val, **params):
-        res = self.get(**params)
+    def set(self, key, val, params):
+        res = self.get(params)
 
         for ent in res:
             ent[key] = res
@@ -272,8 +272,7 @@ class Fest(Entry):
 
     def __init__(self, data):
         self.test = assign(
-            dates=dict,
-            place=str
+            count=int
         )
 
         super().__init__(data)
