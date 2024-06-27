@@ -7,29 +7,31 @@ import os
 class Lineup:
     def __init__(self, names, fest, year):
         self.names = Lineup.clean(names)
+        self.fest  = fest.title()
         self.year  = int(year)
-        self.fest  = fest
 
     @staticmethod
     def clean(names):
-        diff = Lineup.trim(names)
+        space = Lineup.strip(names)
+        diff  = Lineup.trim (space)
+
+        return [n for n in diff if n]
+
+    @staticmethod
+    def trim(names):
+        # Trims common prefixes and suffixes
+        backw = [s[::-1] for s in names]
+        head  = len(os.path.commonprefix(names))
+        tail  = len(os.path.commonprefix(backw))
 
         return [
-            (new := n.strip())
-            for n in diff if new
+            s[head:len(s) - tail]
+            for s in names
         ]
 
     @staticmethod
-    def trim(lst):
-        # Trims common prefixes and suffixes
-        rev = [s[::-1] for s in lst]
-        pre = len(os.path.commonprefix(lst))
-        pst = len(os.path.commonprefix(rev))
-
-        return [
-            s[pre:len(s) - pst]
-            for s in lst
-        ]
+    def strip(names):
+        return [n.strip() for n in names]
 
 
 def split(row):
