@@ -1,5 +1,6 @@
 import difflib
 import pylast
+import tqdm
 import time
 import re
 
@@ -171,23 +172,44 @@ def append(lineup, search, tables):
     them to the database, and creates a lineup entry
     if not already present.
     """
-    for n in lineup.names:
+    names = lineup.names
+    fest  = lineup.fest
+    year  = lineup.year
+    empty = []
+
+    args  = {
+        'fest': fest,
+        'year': year,
+        'bill': 'undercard'
+    }
+
+    if entry := tables.get_set(args):
+        return
+
+    for n in tqdm.tqdm(names):
         c, g = search(n)
-        tables.add_artist((c, g))
+        tables.add_artist(c, g)
 
-        args = {
-            'artist': c,
-            'fest'  : lineup.fest,
-            'year'  : lineup.year
-        }
-
-        if tables.get_set(**args):
-            return
-
-        tables.add_set(
-            bill = 'Undercard',
-            **args
-        )
+        args['artist'] = c
+        tables.add_set(args)
 
         if not g['genres']:
-            print(f'Not Found: {c}')
+            empty.append(c)
+
+    plus = {
+        'count': len(names)
+    }
+
+    if tables.get_fest(fest):
+        for key, val in plus:
+            val = plus[key]
+            entry[key][year] = val
+    else:
+        for key in plus:
+            val = plus[key]
+            plus[key] = {year: val}
+
+        tables.add_fest(fest, plus)
+
+    for n in empty:
+        print(f'Not Found: {n}')
