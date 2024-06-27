@@ -171,16 +171,13 @@ def append(lineup, search, tables):
     them to the database, and creates a lineup entry
     if not already present.
     """
-    fest = wrap['fest']
-    year = wrap['year']
-
     for n in lineup.names:
         c, g = search(n)
         tables.add_artist((c, g))
 
         args = {
             'artist': c,
-            'fest'  : lineup.year,
+            'fest'  : lineup.fest,
             'year'  : lineup.year
         }
 
