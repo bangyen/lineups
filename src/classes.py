@@ -1,104 +1,21 @@
+import src.calculate as calculate
 import collections
 
-class Database(tuple):
-    def __new__(cls, tables):
-        """
-        Overrides the default __new__ method to ensure
-        that the tables are converted to a tuple.
-        """
-        return super(Database, cls) \
-            .__new__(cls, tuple(tables))
+def wrapper(*fields):
+    def recur(self, args):
+        if not args:
+            return self
 
-    def __init__(self, tables):
-        """
-        Unpacks the tables into festivals, artists, and sets,
-        and then converts each table into a dictionary/list
-        of objects (Fest, Artist, or Set).
-        """
-        fests, artists, sets = tables
-        self.tables  = tables
-        self.fests   = {k:Fest  (v) for k,v in fests  .items()}
-        self.artists = {k:Artist(v) for k,v in artists.items()}
-        self.sets    = [Set(s) for s in sets]
+        first, *rest = args
+        apply = getattr(self, first)
 
-    def dumps(self):
-        """
-        Converts the internal data structures (dictionaries
-        and lists of Fest, Artist, and Set objects) into a
-        tuple that can be easily serialized and stored.
-        """
-        f = {k:v.data for k,v in self.fests  .items()}
-        a = {k:v.data for k,v in self.artists.items()}
-        s = [s.data for s in self.sets]
+        return recur(apply, rest)
 
-        return f, a, s
+    def inner(self, *args):
+        func = recur(self, fields)
+        return func(*args)
 
-    @staticmethod
-    def get(table, val):
-        """
-        Traverses the dictionary recursively, creating
-        new sub-dictionaries as needed, and finally
-        returns the value associated with the last key
-        in the sequence.
-        """
-        for v in val:
-            if v not in table:
-                table[v] = {}
-
-            table = table[v]
-
-        return table
-
-    def get_fest(self, val):
-        fests = self.fests
-        return self.get(fests, val)
-
-    def get_artist(self, val):
-        artists = self.artists
-        return self.get(artists, val)
-
-    def get_set(self, **keys):
-        """
-        Searches for sets in the database that have all
-        the key-value pairs specified in the arguments.
-        If only one set is found, it is returned directly.
-        Otherwise, a list of matching sets is returned.
-        """
-        res  = [
-            s for s in self.sets
-            if s | keys == s
-        ]
-
-        if len(res) == 1:
-            return res[0]
-
-        return res
-
-    @staticmethod
-    def add(table, args):
-        """
-        Uses the get method to navigate to the correct
-        sub-dictionary based on the first arguments,
-        and then adds the last two arguments as a
-        key-value pair to that sub-dictionary.
-        """
-        out  = Database.get(
-            table, args[:-2]
-        )
-
-        key, val = args[-2:]
-        out[key] = val
-
-    def add_fest(self, val):
-        fests = self.fests
-        self.add(fests, val)
-
-    def add_artist(self, val):
-        artists = self.artists
-        self.add(artists, val)
-
-    def add_set(self, **vals):
-        self.sets.append(vals)
+    return inner
 
 
 def assign(**kwargs):
@@ -136,7 +53,7 @@ def check(name, test):
     return inner
 
 
-def pretty(self, key=None):
+def pretty(self, key):
     """
     Uses the headers defined in the class to iterate
     over the object's attributes, converts the values
@@ -160,21 +77,198 @@ def pretty(self, key=None):
     ]
 
 
-class Table(collections.UserDict):
+class Database(tuple):
+    def __new__(cls, tables):
+        """
+        Overrides the default __new__ method to ensure
+        that the tables are converted to a tuple.
+        """
+        return super(Database, cls) \
+            .__new__(cls, tuple(tables))
+
+    def __init__(self, tables):
+        """
+        Unpacks the tables into festivals, artists, and sets,
+        and then converts each table into a dictionary/list
+        of objects (Fest, Artist, or Set).
+        """
+        fests, artists, sets = tables
+        f = self.table(fests,   Fest)
+        a = self.table(artists, Artist)
+        s = self.table(sets,    Set)
+
+        self.tables  = (f, a, s)
+        self.fests   = f
+        self.artists = a
+        self.sets    = s
+
+    def dumps(self):
+        """
+        Converts the internal data structures (dictionaries
+        and lists of Fest, Artist, and Set objects) into a
+        tuple that can be easily serialized and stored.
+        """
+        return tuple(t.dumps() for t in self.tables)
+
+    @staticmethod
+    def table(data, sub):
+        if isinstance(data, list):
+            return ListTable(data, sub)
+
+        return DictTable(data, sub)
+
+    get_fest   = wrapper('fests',   'get')
+    get_artist = wrapper('artists', 'get')
+    get_set    = wrapper('sets',    'get')
+
+    set_fest   = wrapper('fests',   'set')
+    set_artist = wrapper('artists', 'set')
+    set_set    = wrapper('sets',    'set')
+
+    add_fest   = wrapper('fests',   'add')
+    add_artist = wrapper('artists', 'add')
+    add_set    = wrapper('sets',    'add')
+
+
+class Table:
+    def filter(self, tree):
+        query = []
+
+        for key in self:
+            if not tree.test(self, key):
+                continue
+
+            query.append(key)
+
+        return self.subset(query)
+
+    def format(self):
+        header = self.type.headers
+        data   = self.data
+        strs   = [
+            self[k].format(k)
+            for k in self
+        ]
+
+        table = calculate.table(header)
+        table.add_rows(strs)
+        table.header = True
+
+        return table
+
+
+class DictTable(Table, collections.UserDict):
+    def __init__(self, data, subtype):
+        self.type = subtype
+        self.data = {
+            k:subtype(data[k])
+            for k in data
+        }
+
+    def subset(self, keys):
+        cls  = self.type
+        data = self.data
+        sub  = DictTable({}, cls)
+
+        sub.data = {
+            k:data[k]
+            for k in keys
+        }
+
+        return sub
+
+    def get(self, row, col=None):
+        res = self.data.get(row)
+
+        if res is None:
+            return
+
+        if col is None:
+            return res
+
+        return res.get(col)
+
+    def set(self, row, col, value):
+        res = self.get(row, col)
+
+        if res is None:
+            return False
+
+        ent = self.get(row)
+        ent[col] = value
+
+        return True
+
+    def add(self, key, value):
+        new = self.type(value)
+        self.data[key] = new
+
+    def dumps(self):
+        return {
+            k:v.data for k,v in
+            self.data.items()
+        }
+
+
+class ListTable(Table, collections.UserList):
+    def __init__(self, data, subtype):
+        self.data = [subtype(v) for v in data]
+        self.type = subtype
+
+    def __iter__(self):
+        size = len(self.data)
+        return iter(range(size))
+
+    def subset(self, keys):
+        cls  = self.type
+        data = self.data
+        sub  = ListTable([], cls)
+
+        sub.data = [
+            data[k] for k in keys
+        ]
+
+        return sub
+
+    def get(self, **keys):
+        res = [
+            s for s in self.sets
+            if s | keys == s
+        ]
+
+        return res
+
+    def set(self, key, val, **params):
+        res = self.get(**params)
+
+        for ent in res:
+            ent[key] = res
+
+        return len(res) > 0
+
+    def add(self, data):
+        new = self.type(data)
+        self.data.append(new)
+
+    def dumps(self):
+        return [v.data for v in self.data]
+
+
+class Entry(collections.UserDict):
     """
     Uses the pretty method to format its attributes.
     It also defines a custom __setitem__ method to
     validate the type of the value being assigned.
     """
-    pretty = pretty
+    format = pretty
 
     def __setitem__(self, key, val):
         if self.test(key, val):
             super().__setitem__(key, val)
 
 
-class Fest(Table):
-    headers = ['key', 'place']
+class Fest(Entry):
+    headers = ['key']
 
     def __init__(self, data):
         self.test = assign(
@@ -185,7 +279,7 @@ class Fest(Table):
         super().__init__(data)
 
 
-class Artist(Table):
+class Artist(Entry):
     headers = ['key', 'main', 'genres', 'woman']
 
     def __init__(self, data):
@@ -201,7 +295,7 @@ class Artist(Table):
         super().__init__(data)
 
 
-class Set(Table):
+class Set(Entry):
     headers = ['artist', 'bill', 'fest', 'year']
 
     def __init__(self, data):

@@ -125,7 +125,7 @@ def overlap(
     ]
 
 
-def table(*columns):
+def table(columns):
     """
     Creates a PrettyTable object with custom
     settings. It takes column names as inputs

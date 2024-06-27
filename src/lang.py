@@ -1,5 +1,4 @@
-import src.calculate as calculate
-import src.classes   as classes
+import src.classes as classes
 import operator
 import re
 
@@ -51,17 +50,7 @@ class Syntax:
         tree  = self.tree
 
         table = getattr(tables, name)
-        pair  = Syntax.pair(table)
-        query = []
-
-        for key in table:
-            if not tree.test(table, key):
-                continue
-
-            val = pair(key)
-            query.append(val)
-
-        return query
+        return table.filter(tree)
 
 
 class Node:
@@ -129,22 +118,18 @@ class Node:
         and operations.
         """
         def get(tab, key):
-            if isinstance(key, str):
-                return tab[key][val]
-
-            return key[val]
+            return tab[key][val]
 
         def search(key, reg):
             return re.search(reg, key)
 
         expr = {
             'key': lambda t, k: k,
-            'and': operator.and_,
-            'or' : operator.or_ ,
-            '==' : operator.eq  ,
-            '!=' : operator.ne  ,
+            'and': operator.and_ ,
+            'or' : operator.or_,
+            '==' : operator.eq ,
+            '!=' : operator.ne ,
             '=~' : search,
-            'None' : None,
             'True' : True,
             'False': False
         }
@@ -211,30 +196,9 @@ def lex(inp):
 def run(inp, tables):
     token = lex(inp)
     tree  = Syntax(token)
+    subt  = tree.filter(tables)
 
-    data  = tree.filter(tables)
-    name  = tree.table
-
-    return pretty(data, name)
-
-
-def pretty(data, name):
-    """
-    Prints data represented as a list of tuples.
-    It extracts headers from the table and formats
-    the data.
-    """
-    single = name.capitalize()[:-1]
-    inner  = getattr(classes, single)
-    header = inner.headers
-
-    string = [v.pretty(k) for k,v in data]
-    table  = calculate.table(*header)
-
-    table.add_rows(string)
-    table.header = True
-
-    return table
+    return subt.format()
 
 
 def match(lst):
