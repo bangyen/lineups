@@ -269,13 +269,29 @@ class Entry(collections.UserDict):
 
 class Fest(Entry):
     headers = ['key']
+    fields  = {
+        'count': {
+            'func': lambda n: len(n),
+            'type': int
+        }
+    }
 
     def __init__(self, data):
         self.test = assign(
-            count=int
+            **Fest.get('type')
         )
 
         super().__init__(data)
+
+    @staticmethod
+    def get(key):
+        if key not in ('func', 'type'):
+            raise ValueError
+
+        return {
+            k:v[key] for k,v in
+            Fest.fields.items()
+        }
 
 
 class Artist(Entry):
