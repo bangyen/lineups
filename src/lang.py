@@ -1,4 +1,3 @@
-import src.classes as classes
 import operator
 import re
 
@@ -124,7 +123,7 @@ class Node:
             return re.search(reg, key)
 
         expr = {
-            'key': lambda t, k: k,
+            'key': lambda _, k: k,
             'and': operator.and_ ,
             'or' : operator.or_,
             '==' : operator.eq ,

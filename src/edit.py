@@ -1,6 +1,4 @@
-import src.generate as generate
-import src.collect  as collect
-import os
+import src.collect as collect
 
 def interact(tables):
     """

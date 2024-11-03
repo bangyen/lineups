@@ -1,6 +1,4 @@
-import src.generate as generate
-import prettytable  as pt
-import sys
+import prettytable as pt
 
 def compare(loop, args, order):
     """
