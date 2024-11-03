@@ -3,8 +3,10 @@ import src.calculate as calculate
 import src.generate  as generate
 import src.collect   as collect
 import src.lang      as lang
-import src.lang      as edit
+import src.edit      as edit
+
 import argparse
+import dotenv
 
 def factory(split):
     """
@@ -101,6 +103,8 @@ def edit(params, tables):
 
 
 if __name__ == '__main__':
+    dotenv.load_dotenv()
+
     choice = (
         'html' , 'text'   ,
         'query', 'overlap',
