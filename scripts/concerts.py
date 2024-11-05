@@ -1,5 +1,6 @@
 from src.scraper  import WebScraper
 from src.database import Database
+from tqdm         import tqdm
 
 import dotenv
 import time
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     find  = cbase.cache.find_one
     fests = fbase.find({})
 
-    for fest in fests:
+    for fest in tqdm(fests):
         sets = collect(fest)
         time.sleep(5)
 
@@ -58,5 +59,4 @@ if __name__ == '__main__':
         if match:
             continue
 
-        result = cbase.insert(sets)
-        print(result)
+        cbase.insert(sets)

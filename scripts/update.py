@@ -5,14 +5,18 @@ import dotenv
 if __name__ == '__main__':
     dotenv.load_dotenv()
 
-    names = ['festivals', 'concerts']
+    names = ['artists']
 
     for name in names:
         base = Database(name)
+        data = base.find({})
 
-        for k in range(1990, 2025):
-            find  = {'year': str(k)}
-            data  = {'$set': {'year': k}}
-            cache = base.cache
+        for obj in data:
+            name = obj['_id']
+            tags = obj['tags']
+            diff = {'tags': tags[:5]}
 
-            cache.update_many(find, data)
+            base.cache.update_one(
+                {'_id':  name},
+                {'$set': diff}
+            )
